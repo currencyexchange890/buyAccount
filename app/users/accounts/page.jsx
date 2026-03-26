@@ -131,7 +131,7 @@ export default function AccountsPage() {
         </div>
 
         <section
-          className="rounded-[28px] border border-white/10 bg-[#0a1428] p-4 sm:p-5"
+          className="rounded-[10px] border border-white/10 bg-[#0a1428] p-4 sm:p-5"
           style={{ boxShadow: shellShadow }}
         >
           <div className="mb-5">
@@ -148,16 +148,16 @@ export default function AccountsPage() {
               {Array.from({ length: 4 }).map((_, index) => (
                 <div
                   key={index}
-                  className="rounded-[22px] border border-white/10 bg-[#0f1a33] p-3"
+                  className="rounded-[10px] border border-white/10 bg-[#0f1a33] p-3"
                   style={{ boxShadow: cardShadow }}
                 >
-                  <div className="h-28 animate-pulse rounded-[18px] bg-white/5" />
+                  <div className="h-28 animate-pulse rounded-[10px] bg-white/5" />
                 </div>
               ))}
             </div>
           ) : activeAccounts.length === 0 ? (
             <div
-              className="rounded-[22px] border border-white/10 bg-[#0f1a33] p-6 text-center text-white/55"
+              className="rounded-[10px] border border-white/10 bg-[#0f1a33] p-6 text-center text-white/55"
               style={{ boxShadow: cardShadow }}
             >
               No active account found right now.
@@ -190,7 +190,7 @@ function CompactAccountCard({ item, index, now, onCopy }) {
 
   return (
     <div
-      className="rounded-[22px] border border-white/10 bg-[#0f1a33] p-3 sm:p-3.5"
+      className="rounded-[10px] border border-white/10 bg-[#0f1a33] p-3 sm:p-3.5"
       style={{ boxShadow: cardShadow }}
     >
       <div className="mb-2 flex items-center justify-between gap-2">
@@ -220,7 +220,7 @@ function CompactAccountCard({ item, index, now, onCopy }) {
       </div>
 
       <div
-        className="mt-2.5 rounded-2xl border border-white/10 bg-[#101a31] px-3 py-3"
+        className="mt-2.5 rounded-md border border-white/10 bg-[#101a31] px-3 py-3"
         style={{ boxShadow: cardShadow }}
       >
         <div className="flex items-center justify-between gap-2">
@@ -246,7 +246,7 @@ function CompactAccountCard({ item, index, now, onCopy }) {
 function InfoRow({ icon, label, value, onCopy }) {
   return (
     <div
-      className="rounded-2xl border border-white/10 bg-[#101a31] px-3 py-2.5"
+      className="rounded-md border border-white/10 bg-[#101a31] px-3 py-2.5"
       style={{ boxShadow: cardShadow }}
     >
       <div className="mb-1 flex items-center gap-2 text-white/45">
@@ -262,7 +262,7 @@ function InfoRow({ icon, label, value, onCopy }) {
         <button
           type="button"
           onClick={onCopy}
-          className="flex h-8 shrink-0 items-center rounded-xl border border-emerald-300/20 bg-[#22c55e] px-3 text-[11px] font-semibold text-white transition hover:brightness-105"
+          className="flex h-8 shrink-0 items-center rounded-md border border-emerald-300/20 bg-[#22c55e] px-3 text-[11px] font-semibold text-white transition hover:brightness-105"
           style={{
             boxShadow:
               "0 12px 22px rgba(34,197,94,.22), inset 1px 1px 0 rgba(255,255,255,.14), inset -1px -1px 0 rgba(0,0,0,.12)",
@@ -278,7 +278,7 @@ function InfoRow({ icon, label, value, onCopy }) {
 function CountdownUnit({ label, value, pulse = false }) {
   return (
     <div
-      className={`rounded-2xl border border-white/10 bg-[#0f1a33] px-2 py-2.5 text-center ${pulse ? "countdown-pulse" : ""}`}
+      className={`rounded-md border border-white/10 bg-[#0f1a33] px-2 py-2.5 text-center ${pulse ? "countdown-pulse" : ""}`}
       style={{ boxShadow: cardShadow }}
     >
       <p className="text-[18px] font-extrabold leading-none text-[#93c5fd]">

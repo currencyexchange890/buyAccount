@@ -8,6 +8,14 @@ import Transaction from "@/models/Transaction"
 
 const LIMIT_WINDOW_HOURS = 24
 const LIMIT_WINDOW_MS = LIMIT_WINDOW_HOURS * 60 * 60 * 1000
+const RECHARGE_AUTO_THRESHOLD = 50
+const RECHARGE_OPERATORS = [
+  { key: "grameenphone", label: "Grameenphone" },
+  { key: "robi", label: "Robi" },
+  { key: "airtel", label: "Airtel" },
+  { key: "teletalk", label: "Teletalk" },
+  { key: "banglalink", label: "Banglalink" },
+]
 
 function clearTokenCookie(response) {
   response.cookies.set("token", "", {
@@ -51,38 +59,6 @@ function normalizeMoney(value) {
   }
 
   return Number(number.toFixed(2))
-}
-
-function getSettingsValues(config) {
-  const minimumWithdraw = Number(config?.minimumWithdraw)
-  const withdrawFee = Number(config?.withdrawFee)
-  const dailyWithdrawCount = Number(config?.dailyWithdrawCount)
-  const dailyMaxWithdraw = Number(config?.dailyMaxWithdraw)
-
-  return {
-    minimumWithdrawAmount:
-      Number.isFinite(minimumWithdraw) && minimumWithdraw > 0 ? minimumWithdraw : 50,
-    withdrawFeePercent:
-      Number.isFinite(withdrawFee) && withdrawFee >= 0 ? withdrawFee : 0,
-    dailyWithdrawCountLimit:
-      Number.isFinite(dailyWithdrawCount) && dailyWithdrawCount > 0 ? dailyWithdrawCount : 0,
-    dailyMaxWithdrawLimit:
-      Number.isFinite(dailyMaxWithdraw) && dailyMaxWithdraw > 0 ? dailyMaxWithdraw : 0,
-  }
-}
-
-function mapWithdraw(item) {
-  return {
-    id: item._id.toString(),
-    method: item.method,
-    number: item.number,
-    amount: Number(item.amount || 0),
-    feePercent: Number(item.feePercent || 0),
-    feeAmount: Number(item.feeAmount || 0),
-    payableAmount: Number(item.payableAmount ?? item.amount ?? 0),
-    status: item.status,
-    createdAt: item.createdAt,
-  }
 }
 
 function formatMoney(value) {
@@ -145,15 +121,84 @@ function getBangladeshTime() {
   }).format(new Date())
 }
 
-function buildWithdrawTelegramMessage({ fullName, amount, method, mobile }) {
+function getSettingsValues(config) {
+  const minimumWithdraw = Number(config?.minimumWithdraw)
+  const withdrawFee = Number(config?.withdrawFee)
+  const dailyWithdrawCount = Number(config?.dailyWithdrawCount)
+  const dailyMaxWithdraw = Number(config?.dailyMaxWithdraw)
+
+  return {
+    minimumWithdrawAmount:
+      Number.isFinite(minimumWithdraw) && minimumWithdraw > 0 ? minimumWithdraw : 50,
+    withdrawFeePercent:
+      Number.isFinite(withdrawFee) && withdrawFee >= 0 ? withdrawFee : 0,
+    dailyWithdrawCountLimit:
+      Number.isFinite(dailyWithdrawCount) && dailyWithdrawCount > 0 ? dailyWithdrawCount : 0,
+    dailyMaxWithdrawLimit:
+      Number.isFinite(dailyMaxWithdraw) && dailyMaxWithdraw > 0 ? dailyMaxWithdraw : 0,
+  }
+}
+
+function getWindowStart() {
+  return new Date(Date.now() - LIMIT_WINDOW_MS)
+}
+
+function sortWithdrawsAscendingByTime(items) {
+  return [...items].sort(
+    (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+  )
+}
+
+function getMethodLabel(method) {
+  if (method === "bkash") return "bKash"
+  if (method === "nagad") return "Nagad"
+  if (method === "recharge") return "Mobile Recharge"
+  return "Unknown"
+}
+
+function getOperatorLabel(operator) {
+  return (
+    RECHARGE_OPERATORS.find((item) => item.key === operator)?.label || ""
+  )
+}
+
+function getMethodSummary(method, operator) {
+  if (method === "recharge") {
+    const operatorLabel = getOperatorLabel(operator)
+    return operatorLabel
+      ? `Mobile Recharge • ${operatorLabel}`
+      : "Mobile Recharge"
+  }
+
+  return getMethodLabel(method)
+}
+
+function mapWithdraw(item) {
+  return {
+    id: item._id.toString(),
+    method: item.method,
+    operator: item.operator || "",
+    methodLabel: getMethodSummary(item.method, item.operator || ""),
+    number: item.number,
+    amount: Number(item.amount || 0),
+    feePercent: Number(item.feePercent || 0),
+    feeAmount: Number(item.feeAmount || 0),
+    payableAmount: Number(item.payableAmount ?? item.amount ?? 0),
+    status: item.status,
+    createdAt: item.createdAt,
+  }
+}
+
+function buildWithdrawTelegramMessage({ fullName, amount, method, operator, mobile }) {
   const bdTime = getBangladeshTime()
+  const methodLine = getMethodSummary(method, operator)
 
   return [
     "💵 Withdraw Request 💵",
     "",
     `👤 Name: ${fullName}`,
     `💰 Amount: ${amount} BDT`,
-    `🏦 Method: ${String(method || "").toUpperCase()}`,
+    `🏦 Method: ${methodLine}`,
     `📱 Number: ${mobile}`,
     `🇧🇩 Time: ${bdTime}`,
   ].join("\n")
@@ -190,16 +235,6 @@ async function sendTelegramMessage(message) {
   } catch (error) {
     console.log("Telegram error:", error)
   }
-}
-
-function getWindowStart() {
-  return new Date(Date.now() - LIMIT_WINDOW_MS)
-}
-
-function sortWithdrawsAscendingByTime(items) {
-  return [...items].sort(
-    (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-  )
 }
 
 function buildUsageStats(recentWithdraws, limits) {
@@ -322,10 +357,7 @@ function buildLimitPayload({ recentWithdraws, limits, requestedAmount = 0 }) {
   const amountShortBy =
     limits.dailyMaxWithdrawLimit > 0
       ? normalizeMoney(
-          Math.max(
-            requestedAmount - (stats.remainingWithdrawAmount || 0),
-            0
-          )
+          Math.max(requestedAmount - (stats.remainingWithdrawAmount || 0), 0)
         )
       : 0
 
@@ -352,16 +384,13 @@ function buildLimitPayload({ recentWithdraws, limits, requestedAmount = 0 }) {
 }
 
 function buildAvailabilityPayload(recentWithdraws, limits) {
-  const stats = buildUsageStats(recentWithdraws, limits)
+  const recentWithdrawsAsc = sortWithdrawsAscendingByTime(recentWithdraws)
+  const stats = buildUsageStats(recentWithdrawsAsc, limits)
   const countRetryAt = stats.isCountBlocked
-    ? getCountRetryAt(sortWithdrawsAscendingByTime(recentWithdraws), limits.dailyWithdrawCountLimit)
+    ? getCountRetryAt(recentWithdrawsAsc, limits.dailyWithdrawCountLimit)
     : null
   const amountRetryAt = stats.isAmountBlocked
-    ? getAmountRetryAt(
-        sortWithdrawsAscendingByTime(recentWithdraws),
-        limits.dailyMaxWithdrawLimit,
-        1
-      )
+    ? getAmountRetryAt(recentWithdrawsAsc, limits.dailyMaxWithdrawLimit, 1)
     : null
 
   const blockers = [countRetryAt, amountRetryAt].filter(Boolean)
@@ -377,6 +406,30 @@ function buildAvailabilityPayload(recentWithdraws, limits) {
     retryInMs: retryAt ? Math.max(retryAt.getTime() - Date.now(), 0) : 0,
     retryInText: retryAt ? formatDuration(Math.max(retryAt.getTime() - Date.now(), 0)) : "",
   }
+}
+
+function buildLimitMessage(limitCheck, requestedAmount) {
+  const stats = limitCheck.stats
+
+  if (limitCheck.limitType === "count") {
+    return `You already used ${stats.last24HourWithdrawCount}/${stats.dailyWithdrawCountLimit} withdraw requests in the last ${LIMIT_WINDOW_HOURS} hours. Try again after ${limitCheck.retryInText || "some time"}.`
+  }
+
+  if (limitCheck.limitType === "amount") {
+    if ((limitCheck.currentAllowedAmount || 0) > 0) {
+      return `Your requested amount exceeds the last ${LIMIT_WINDOW_HOURS}-hour withdraw limit. You can withdraw up to ৳${formatMoney(
+        limitCheck.currentAllowedAmount
+      )} now, or try ৳${formatMoney(requestedAmount)} after ${limitCheck.retryInText || "some time"}.`
+    }
+
+    return `You already used ৳${formatMoney(
+      stats.last24HourWithdrawAmount
+    )} of your ৳${formatMoney(
+      stats.dailyMaxWithdrawLimit
+    )} limit in the last ${LIMIT_WINDOW_HOURS} hours. Try again after ${limitCheck.retryInText || "some time"}.`
+  }
+
+  return `Your request crosses both the request count and amount limit for the last ${LIMIT_WINDOW_HOURS} hours. Try again after ${limitCheck.retryInText || "some time"}.`
 }
 
 export async function GET(req) {
@@ -423,6 +476,8 @@ export async function GET(req) {
         withdrawBalance: Number(user.withdrawBalance || 0),
         withdraws: withdraws.map(mapWithdraw),
         limitStats,
+        rechargeAutoThreshold: RECHARGE_AUTO_THRESHOLD,
+        rechargeOperators: RECHARGE_OPERATORS,
       },
       { status: 200 }
     )
@@ -452,10 +507,11 @@ export async function POST(req) {
     const amount = Number(body.amount)
     const method = body.method?.trim()
     const number = body.number?.trim()
+    const operator = body.operator?.trim() || ""
 
-    if (!["bkash", "nagad"].includes(method)) {
+    if (!Number.isFinite(amount) || amount <= 0) {
       return NextResponse.json(
-        { message: "Invalid withdraw method" },
+        { message: "Please enter a valid amount" },
         { status: 400 }
       )
     }
@@ -467,9 +523,30 @@ export async function POST(req) {
       )
     }
 
-    if (Number.isNaN(amount) || amount <= 0) {
+    const validMethods = ["bkash", "nagad", "recharge"]
+
+    if (!validMethods.includes(method)) {
       return NextResponse.json(
-        { message: "Please enter a valid amount" },
+        { message: "Invalid withdraw method" },
+        { status: 400 }
+      )
+    }
+
+    const isRecharge = method === "recharge"
+    const mustUseRecharge = amount < RECHARGE_AUTO_THRESHOLD
+
+    if (mustUseRecharge && !isRecharge) {
+      return NextResponse.json(
+        {
+          message: `Amounts below ৳${formatMoney(RECHARGE_AUTO_THRESHOLD)} are allowed only as mobile recharge.`,
+        },
+        { status: 400 }
+      )
+    }
+
+    if (isRecharge && !RECHARGE_OPERATORS.some((item) => item.key === operator)) {
+      return NextResponse.json(
+        { message: "Please select a valid mobile operator" },
         { status: 400 }
       )
     }
@@ -496,7 +573,7 @@ export async function POST(req) {
 
     const limits = getSettingsValues(config)
 
-    if (amount < limits.minimumWithdrawAmount) {
+    if (!isRecharge && amount < limits.minimumWithdrawAmount) {
       return NextResponse.json(
         {
           message: `Minimum withdraw amount is ৳${formatMoney(limits.minimumWithdrawAmount)}`,
@@ -506,12 +583,13 @@ export async function POST(req) {
     }
 
     const currentWithdrawBalance = Number(user.withdrawBalance || 0)
+    const minimumBalanceNeeded = isRecharge ? 1 : limits.minimumWithdrawAmount
 
-    if (currentWithdrawBalance < limits.minimumWithdrawAmount) {
+    if (currentWithdrawBalance < minimumBalanceNeeded) {
       return NextResponse.json(
         {
           message: `Your withdraw balance must be at least ৳${formatMoney(
-            limits.minimumWithdrawAmount
+            minimumBalanceNeeded
           )}`,
         },
         { status: 400 }
@@ -566,12 +644,15 @@ export async function POST(req) {
             remainingWithdrawCount: stats.remainingWithdrawCount,
             remainingWithdrawAmount: stats.remainingWithdrawAmount,
           },
+          rechargeAutoThreshold: RECHARGE_AUTO_THRESHOLD,
+          rechargeOperators: RECHARGE_OPERATORS,
         },
         { status: 429 }
       )
     }
 
-    const feeAmount = normalizeMoney((amount * limits.withdrawFeePercent) / 100)
+    const feePercent = isRecharge ? 0 : limits.withdrawFeePercent
+    const feeAmount = normalizeMoney((amount * feePercent) / 100)
     const payableAmount = normalizeMoney(Math.max(amount - feeAmount, 0))
     const updatedWithdrawBalance = normalizeMoney(currentWithdrawBalance - amount)
 
@@ -580,11 +661,12 @@ export async function POST(req) {
     const withdraw = await Withdraw.create({
       userId: auth.id,
       amount,
-      feePercent: limits.withdrawFeePercent,
+      feePercent,
       feeAmount,
       payableAmount,
       number,
       method,
+      operator: isRecharge ? operator : "",
       status: "pending",
     })
 
@@ -594,17 +676,22 @@ export async function POST(req) {
       userId: auth.id,
       amount,
       type: "withdraw",
-      note: `You requested a withdraw of BDT ${formatMoney(
-        amount
-      )} via ${method === "bkash" ? "bKash" : "Nagad"}. Fee ${limits.withdrawFeePercent}% (BDT ${formatMoney(
-        feeAmount
-      )}). You will receive BDT ${formatMoney(payableAmount)}.`,
+      note: isRecharge
+        ? `You requested a mobile recharge of BDT ${formatMoney(amount)} to ${number} (${getOperatorLabel(
+            operator
+          )}).`
+        : `You requested a withdraw of BDT ${formatMoney(amount)} via ${getMethodLabel(
+            method
+          )}. Fee ${feePercent}% (BDT ${formatMoney(
+            feeAmount
+          )}). You will receive BDT ${formatMoney(payableAmount)}.`,
     })
 
     const telegramMessage = buildWithdrawTelegramMessage({
       fullName: user.fullName || "Unknown User",
       amount,
       method,
+      operator,
       mobile: number,
     })
 
@@ -617,12 +704,16 @@ export async function POST(req) {
 
     return NextResponse.json(
       {
-        message: `Withdraw request submitted successfully. You will receive ৳${formatMoney(
-          payableAmount
-        )}`,
+        message: isRecharge
+          ? `Recharge request submitted successfully for ${getOperatorLabel(operator)}.`
+          : `Withdraw request submitted successfully. You will receive ৳${formatMoney(
+              payableAmount
+            )}`,
         withdraw: mapWithdraw(withdraw),
         withdrawBalance: updatedWithdrawBalance,
         limitStats: nextLimitStats,
+        rechargeAutoThreshold: RECHARGE_AUTO_THRESHOLD,
+        rechargeOperators: RECHARGE_OPERATORS,
       },
       { status: 201 }
     )
@@ -634,28 +725,4 @@ export async function POST(req) {
       { status: 500 }
     )
   }
-}
-
-function buildLimitMessage(limitCheck, requestedAmount) {
-  const stats = limitCheck.stats
-
-  if (limitCheck.limitType === "count") {
-    return `You already used ${stats.last24HourWithdrawCount}/${stats.dailyWithdrawCountLimit} withdraw requests in the last ${LIMIT_WINDOW_HOURS} hours. Try again after ${limitCheck.retryInText || "some time"}.`
-  }
-
-  if (limitCheck.limitType === "amount") {
-    if ((limitCheck.currentAllowedAmount || 0) > 0) {
-      return `Your requested amount exceeds the last ${LIMIT_WINDOW_HOURS}-hour withdraw limit. You can withdraw up to ৳${formatMoney(
-        limitCheck.currentAllowedAmount
-      )} now, or try ৳${formatMoney(requestedAmount)} after ${limitCheck.retryInText || "some time"}.`
-    }
-
-    return `You already used ৳${formatMoney(
-      stats.last24HourWithdrawAmount
-    )} of your ৳${formatMoney(
-      stats.dailyMaxWithdrawLimit
-    )} limit in the last ${LIMIT_WINDOW_HOURS} hours. Try again after ${limitCheck.retryInText || "some time"}.`
-  }
-
-  return `Your request crosses both the request count and amount limit for the last ${LIMIT_WINDOW_HOURS} hours. Try again after ${limitCheck.retryInText || "some time"}.`
 }

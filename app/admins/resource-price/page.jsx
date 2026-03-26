@@ -144,7 +144,7 @@ export default function ResourcePricePage() {
         </div>
 
         <section
-          className="rounded-[28px] border border-white/10 bg-[#0a1428] p-4 sm:p-5"
+          className="rounded-[10px] border border-white/10 bg-[#0a1428] p-4 sm:p-5"
           style={{ boxShadow: shellShadow }}
         >
           <div className="mb-5">
@@ -158,7 +158,7 @@ export default function ResourcePricePage() {
 
           {loading ? (
             <div
-              className="rounded-[24px] border border-white/10 bg-[#0f1a33] p-5 text-center text-white/60"
+              className="rounded-[10px] border border-white/10 bg-[#0f1a33] p-5 text-center text-white/60"
               style={{ boxShadow: cardShadow }}
             >
               Loading resource prices...
@@ -172,7 +172,7 @@ export default function ResourcePricePage() {
                 return (
                   <div
                     key={item.id}
-                    className="rounded-[24px] border border-white/10 bg-[#0f1a33] p-3 sm:p-4"
+                    className="rounded-[10px] border border-white/10 bg-[#0f1a33] p-3 sm:p-4"
                     style={{ boxShadow: cardShadow }}
                   >
                     <div className="flex items-stretch gap-3">
@@ -183,7 +183,7 @@ export default function ResourcePricePage() {
                           </div>
 
                           <div
-                            className="flex h-11 items-center gap-3 rounded-2xl border border-white/10 bg-[#101a31] px-3"
+                            className="flex h-11 items-center gap-3 rounded-md border border-white/10 bg-[#101a31] px-3"
                             style={{ boxShadow: cardShadow }}
                           >
                             <HiOutlineCash className="shrink-0 text-[#60a5fa]" />
@@ -209,7 +209,7 @@ export default function ResourcePricePage() {
                             type="button"
                             onClick={() => enableEdit(item.id)}
                             disabled={isSaving}
-                            className="flex h-11 w-full items-center justify-center gap-2 rounded-2xl border border-white/10 bg-[#101a31] text-sm font-semibold text-white transition hover:brightness-[1.03] disabled:cursor-not-allowed disabled:opacity-60"
+                            className="flex h-11 w-full items-center justify-center gap-2 rounded-md border border-white/10 bg-[#101a31] text-sm font-semibold text-white transition hover:brightness-[1.03] disabled:cursor-not-allowed disabled:opacity-60"
                             style={{ boxShadow: cardShadow }}
                           >
                             <HiOutlinePencil className="text-base" />
@@ -220,7 +220,7 @@ export default function ResourcePricePage() {
                             type="button"
                             onClick={() => handleUpdate(item)}
                             disabled={!isEditing || isSaving}
-                            className="flex h-11 w-full items-center justify-center gap-2 rounded-2xl bg-[#3b82f6] text-sm font-semibold text-white transition hover:brightness-[1.03] active:translate-y-[1px] disabled:cursor-not-allowed disabled:opacity-50"
+                            className="flex h-11 w-full items-center justify-center gap-2 rounded-md bg-[#3b82f6] text-sm font-semibold text-white transition hover:brightness-[1.03] active:translate-y-[1px] disabled:cursor-not-allowed disabled:opacity-50"
                             style={{ boxShadow: btnShadow }}
                           >
                             <HiOutlineRefresh className="text-base" />
@@ -230,7 +230,7 @@ export default function ResourcePricePage() {
                       </div>
 
                       <div
-                        className="flex h-[108px] w-[108px] shrink-0 items-center justify-center overflow-hidden rounded-[18px] border border-white/10 bg-[#101a31] p-2 sm:h-[120px] sm:w-[120px]"
+                        className="flex h-[108px] w-[108px] shrink-0 items-center justify-center overflow-hidden rounded-[10px] border border-white/10 bg-[#101a31] p-2 sm:h-[120px] sm:w-[120px]"
                         style={{ boxShadow: cardShadow }}
                       >
                         <img

@@ -182,7 +182,7 @@ export default function LoginPage() {
 
           <form
             onSubmit={handleLogin}
-            className="rounded-[28px] border border-white/10 bg-[#0a1428] p-5 sm:p-6"
+            className="rounded-[10px] border border-white/10 bg-[#0a1428] p-5 sm:p-6"
             style={{ boxShadow: cardShadow }}
           >
             <h1 className="text-3xl font-semibold">
@@ -191,7 +191,7 @@ export default function LoginPage() {
 
             <div className="mt-5 space-y-3">
               <div
-                className="flex h-12 items-center gap-3 rounded-2xl border border-white/10 bg-[#0f1a33] px-4"
+                className="flex h-12 items-center gap-3 rounded-md border border-white/10 bg-[#0f1a33] px-4"
                 style={{ boxShadow: fieldShadow }}
               >
                 <HiOutlinePhone className="shrink-0 text-[#60a5fa]" />
@@ -207,7 +207,7 @@ export default function LoginPage() {
               </div>
 
               <div
-                className="flex h-12 items-center gap-3 rounded-2xl border border-white/10 bg-[#0f1a33] px-4"
+                className="flex h-12 items-center gap-3 rounded-md border border-white/10 bg-[#0f1a33] px-4"
                 style={{ boxShadow: fieldShadow }}
               >
                 <HiOutlineLockClosed className="shrink-0 text-[#60a5fa]" />
@@ -234,7 +234,7 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="h-12 w-full rounded-2xl bg-[#3b82f6] font-semibold text-white transition hover:brightness-[1.03] active:translate-y-[1px] disabled:cursor-not-allowed disabled:opacity-70"
+                className="h-12 w-full rounded-md bg-[#3b82f6] font-semibold text-white transition hover:brightness-[1.03] active:translate-y-[1px] disabled:cursor-not-allowed disabled:opacity-70"
                 style={{
                   boxShadow:
                     "10px 10px 24px rgba(18,40,88,.42), -4px -4px 10px rgba(255,255,255,.08), inset 1px 1px 0 rgba(255,255,255,.22), inset -2px -2px 0 rgba(0,0,0,.12)",

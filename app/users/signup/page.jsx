@@ -251,7 +251,7 @@ export default function SignUpPage() {
 
         <form
           onSubmit={handleSubmit}
-          className="rounded-[28px] border border-white/10 bg-[#0a1428] p-6 sm:p-7"
+          className="rounded-[10px] border border-white/10 bg-[#0a1428] p-6 sm:p-7"
           style={{
             boxShadow:
               "18px 18px 38px rgba(0,0,0,.42), -10px -10px 24px rgba(255,255,255,.03), inset 1px 1px 0 rgba(255,255,255,.06), inset -1px -1px 0 rgba(0,0,0,.28)",
@@ -265,7 +265,7 @@ export default function SignUpPage() {
             {fields.map(({ key, placeholder, type, autoComplete, Icon }) => (
               <div
                 key={key}
-                className="h-12 rounded-2xl border border-white/10 bg-[#0f1a33] px-4 flex items-center gap-3"
+                className="h-12 rounded-md border border-white/10 bg-[#0f1a33] px-4 flex items-center gap-3"
                 style={{ boxShadow: fieldShadow }}
               >
                 <Icon className="text-[#60a5fa] shrink-0" />
@@ -281,7 +281,7 @@ export default function SignUpPage() {
             ))}
 
             <div
-              className="h-12 rounded-2xl border border-white/10 bg-[#0f1a33] px-4 flex items-center gap-3"
+              className="h-12 rounded-md border border-white/10 bg-[#0f1a33] px-4 flex items-center gap-3"
               style={{ boxShadow: fieldShadow }}
             >
               <HiOutlineLockClosed className="text-[#60a5fa] shrink-0" />
@@ -306,7 +306,7 @@ export default function SignUpPage() {
             <button
               type="submit"
               disabled={loading}
-              className="h-12 w-full rounded-2xl bg-[#3b82f6] font-semibold text-white transition hover:brightness-[1.03] active:translate-y-[1px] disabled:opacity-70"
+              className="h-12 w-full rounded-md bg-[#3b82f6] font-semibold text-white transition hover:brightness-[1.03] active:translate-y-[1px] disabled:opacity-70"
               style={{
                 boxShadow:
                   "10px 10px 24px rgba(18,40,88,.42), -4px -4px 10px rgba(255,255,255,.08), inset 1px 1px 0 rgba(255,255,255,.22), inset -2px -2px 0 rgba(0,0,0,.12)",

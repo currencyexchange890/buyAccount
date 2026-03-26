@@ -3,12 +3,13 @@
 import { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import toast, { Toaster } from "react-hot-toast"
-import { HiOutlinePhone, HiArrowUp, HiOutlineX, HiOutlineClock } from "react-icons/hi"
-
-const methods = [
-  { key: "bkash", label: "bKash" },
-  { key: "nagad", label: "Nagad" },
-]
+import {
+  HiArrowUp,
+  HiOutlineCash,
+  HiOutlineClock,
+  HiOutlineCreditCard,
+  HiOutlineX,
+} from "react-icons/hi"
 
 const fieldShadow =
   "8px 8px 18px rgba(0,0,0,.32), -4px -4px 10px rgba(255,255,255,.025), inset 1px 1px 0 rgba(255,255,255,.05), inset -1px -1px 0 rgba(0,0,0,.24)"
@@ -40,10 +41,25 @@ const defaultLimitStats = {
   retryInText: "",
 }
 
+const fallbackMethods = [
+  { key: "bkash", label: "bKash" },
+  { key: "nagad", label: "Nagad" },
+  { key: "recharge", label: "Recharge" },
+]
+
+const fallbackOperators = [
+  { key: "grameenphone", label: "Grameenphone" },
+  { key: "robi", label: "Robi" },
+  { key: "airtel", label: "Airtel" },
+  { key: "teletalk", label: "Teletalk" },
+  { key: "banglalink", label: "Banglalink" },
+]
+
 export default function WithdrawPage() {
   const router = useRouter()
 
   const [method, setMethod] = useState("bkash")
+  const [operator, setOperator] = useState("")
   const [number, setNumber] = useState("")
   const [amount, setAmount] = useState("")
 
@@ -56,32 +72,39 @@ export default function WithdrawPage() {
   const [limitStats, setLimitStats] = useState(defaultLimitStats)
   const [limitModal, setLimitModal] = useState(null)
   const [countdown, setCountdown] = useState("")
+  const [rechargeThreshold, setRechargeThreshold] = useState(50)
+  const [rechargeOperators, setRechargeOperators] = useState(fallbackOperators)
 
   const nAmount = useMemo(() => {
-    const n = Number(String(amount).replace(/\D/g, ""))
-    return Number.isFinite(n) ? Math.max(0, n) : 0
+    const value = Number(String(amount).replace(/\D/g, ""))
+    return Number.isFinite(value) ? Math.max(0, value) : 0
   }, [amount])
 
   const validNumber = /^01\d{9}$/.test(number.trim())
-  const belowMinAmount = nAmount > 0 && nAmount < minWithdraw
-  const balanceOk = withdrawBalance >= minWithdraw
+  const isRecharge = method === "recharge"
+  const mustUseRecharge = nAmount > 0 && nAmount < rechargeThreshold
   const amountWithinBalance = nAmount <= withdrawBalance
+  const feePercentToUse = isRecharge ? 0 : withdrawFeePercent
+  const belowMinimumForCashout = !isRecharge && nAmount > 0 && nAmount < minWithdraw
+  const amountRequirementMet = isRecharge ? nAmount > 0 : nAmount >= minWithdraw
+  const balanceRequirement = isRecharge ? withdrawBalance > 0 : withdrawBalance >= minWithdraw
+
   const feeAmount = useMemo(() => {
-    return Number(((nAmount * withdrawFeePercent) / 100).toFixed(2))
-  }, [nAmount, withdrawFeePercent])
+    return Number(((nAmount * feePercentToUse) / 100).toFixed(2))
+  }, [nAmount, feePercentToUse])
 
   const receiveAmount = useMemo(() => {
     return Number(Math.max(nAmount - feeAmount, 0).toFixed(2))
   }, [nAmount, feeAmount])
 
-  const showFeePreview = !!method && validNumber && nAmount > 0
-
+  const showPreview = validNumber && nAmount > 0 && !!method
   const canSubmit =
-    balanceOk &&
-    nAmount >= minWithdraw &&
+    balanceRequirement &&
+    amountRequirementMet &&
     amountWithinBalance &&
-    !!method &&
     validNumber &&
+    !!method &&
+    (!isRecharge || !!operator) &&
     !submitting
 
   useEffect(() => {
@@ -115,11 +138,17 @@ export default function WithdrawPage() {
           setMinWithdraw(Number(data?.minWithdrawAmount || 50))
           setWithdrawFeePercent(Number(data?.withdrawFeePercent || 0))
           setLimitStats(normalizeLimitStats(data?.limitStats))
+          setRechargeThreshold(Number(data?.rechargeAutoThreshold || 50))
+          setRechargeOperators(
+            Array.isArray(data?.rechargeOperators) && data.rechargeOperators.length
+              ? data.rechargeOperators
+              : fallbackOperators
+          )
         }
-      } catch (err) {
-        console.error(err)
+      } catch (error) {
+        console.error(error)
         if (!ignore) {
-          toast.error(err.message || "Failed to load withdraw data")
+          toast.error(error.message || "Failed to load withdraw data")
         }
       } finally {
         if (!ignore) setLoading(false)
@@ -134,6 +163,18 @@ export default function WithdrawPage() {
   }, [router])
 
   useEffect(() => {
+    if (mustUseRecharge && method !== "recharge") {
+      setMethod("recharge")
+    }
+  }, [mustUseRecharge, method])
+
+  useEffect(() => {
+    if (method !== "recharge") {
+      setOperator("")
+    }
+  }, [method])
+
+  useEffect(() => {
     if (!limitModal?.retryAt) {
       setCountdown("")
       return undefined
@@ -145,7 +186,6 @@ export default function WithdrawPage() {
 
     updateCountdown()
     const timer = setInterval(updateCountdown, 1000)
-
     return () => clearInterval(timer)
   }, [limitModal])
 
@@ -172,6 +212,7 @@ export default function WithdrawPage() {
         },
         body: JSON.stringify({
           method,
+          operator,
           number: number.trim(),
           amount: nAmount,
         }),
@@ -208,13 +249,14 @@ export default function WithdrawPage() {
       setLimitStats(normalizeLimitStats(data?.limitStats))
       setAmount("")
       setNumber("")
+      setOperator("")
       setMethod("bkash")
       setLimitModal(null)
 
       toast.success(data?.message || "Withdraw request submitted successfully")
-    } catch (err) {
-      console.error(err)
-      toast.error(err.message || "Failed to create withdraw request")
+    } catch (error) {
+      console.error(error)
+      toast.error(error.message || "Failed to create withdraw request")
     } finally {
       setSubmitting(false)
     }
@@ -233,7 +275,7 @@ export default function WithdrawPage() {
         }}
       />
 
-      <div className="mx-auto w-full max-w-sm space-y-5">
+      <div className="mx-auto w-full max-w-sm space-y-4">
         <div className="flex justify-start">
           <div
             className="rounded-full bg-[#3b82f6] px-4 py-1.5 text-xs font-semibold text-white"
@@ -247,24 +289,34 @@ export default function WithdrawPage() {
         </div>
 
         <section
-          className="rounded-[28px] border border-white/10 bg-[#0a1428] p-5 sm:p-6"
+          className="rounded-[10px] border border-white/10 bg-[#0a1428] p-5 sm:p-6"
           style={{ boxShadow: formShadow }}
         >
           <div className="space-y-3">
             <div
-              className="rounded-2xl border border-[#3b82f6]/20 bg-[#3b82f6]/10 px-4 py-3"
+              className="rounded-md border border-[#3b82f6]/20 bg-[#3b82f6]/10 px-4 py-3"
               style={{ boxShadow: fieldShadow }}
             >
               <p className="text-sm font-semibold leading-relaxed text-[#dbeafe]">
                 Your withdraw balance is{" "}
-                <span className="rounded-lg bg-white/10 px-2 py-0.5 text-white">
+                <span className="rounded-md bg-white/10 px-2 py-0.5 text-white">
                   ৳{formatMoney(withdrawBalance)}
                 </span>
-                {" "}and minimum withdraw amount is{" "}
-                <span className="rounded-lg bg-[#3b82f6]/20 px-2 py-0.5 text-white">
+                {" "}and minimum cash withdraw amount is{" "}
+                <span className="rounded-md bg-[#3b82f6]/20 px-2 py-0.5 text-white">
                   ৳{formatMoney(minWithdraw)}
                 </span>
                 .
+              </p>
+            </div>
+
+            <div
+              className="rounded-md border border-[#22c55e]/20 bg-[#22c55e]/10 px-4 py-3"
+              style={{ boxShadow: fieldShadow }}
+            >
+              <p className="text-sm font-semibold leading-relaxed text-[#bbf7d0]">
+                Amounts below <span className="rounded-md bg-white/10 px-2 py-0.5 text-white">৳{formatMoney(rechargeThreshold)}</span>{" "}
+                will be processed as mobile recharge automatically.
               </p>
             </div>
 
@@ -316,156 +368,179 @@ export default function WithdrawPage() {
 
             {(limitStats.isCountBlocked || limitStats.isAmountBlocked) && (
               <div
-                className="rounded-2xl border border-[#f59e0b]/25 bg-[#f59e0b]/10 px-4 py-3"
+                className="rounded-md border border-[#f59e0b]/25 bg-[#f59e0b]/10 px-4 py-3"
                 style={{ boxShadow: fieldShadow }}
               >
                 <p className="text-sm font-semibold text-[#fde68a]">
-                  {limitStats.isCountBlocked && limitStats.isAmountBlocked
-                    ? "You have reached both request and amount limit for the last 24 hours."
-                    : limitStats.isCountBlocked
-                    ? "You have reached the request count limit for the last 24 hours."
-                    : "You have used the full withdraw amount limit for the last 24 hours."}
+                  Withdraw limit reached. You can try again after{" "}
+                  <span className="text-white">{limitStats.retryInText || "some time"}</span>.
                 </p>
                 {limitStats.retryAtText ? (
-                  <p className="mt-1 text-[12px] text-[#fde68a]/90">
-                    Next retry window: {limitStats.retryAtText}
+                  <p className="mt-1 text-xs text-[#fde68a]/85">
+                    Next available time: {limitStats.retryAtText}
                   </p>
                 ) : null}
               </div>
             )}
 
-            <div
-              className="rounded-2xl border border-white/10 bg-[#0f1a33] p-4"
-              style={{ boxShadow: fieldShadow }}
-            >
-              <p className="mb-3 text-[11px] font-medium uppercase tracking-[0.16em] text-white/35">
-                Method
-              </p>
+            <div className="grid grid-cols-3 gap-2">
+              {fallbackMethods.map((item) => {
+                const disabled = mustUseRecharge && item.key !== "recharge"
+                const active = method === item.key
 
-              <div className="grid grid-cols-2 gap-3">
-                {methods.map((item) => (
+                return (
                   <button
                     key={item.key}
                     type="button"
-                    onClick={() => setMethod(item.key)}
-                    className={`h-12 rounded-2xl border text-sm font-semibold transition active:translate-y-[1px] ${
-                      method === item.key
-                        ? "border-[#60a5fa]/30 bg-[#3b82f6] text-white"
-                        : "border-white/10 bg-[#101d38] text-white/80 hover:text-white"
-                    }`}
-                    style={{ boxShadow: method === item.key ? btnShadow : fieldShadow }}
+                    onClick={() => !disabled && setMethod(item.key)}
+                    disabled={disabled}
+                    className={`h-11 rounded-md border text-sm font-semibold transition ${
+                      active
+                        ? "border-[#3b82f6]/40 bg-[#3b82f6]/20 text-white"
+                        : "border-white/10 bg-[#0f1a33] text-white/70"
+                    } ${disabled ? "cursor-not-allowed opacity-40" : "hover:brightness-[1.03]"}`}
+                    style={{ boxShadow: fieldShadow }}
                   >
                     {item.label}
                   </button>
-                ))}
-              </div>
+                )
+              })}
             </div>
 
-            <div
-              className="rounded-2xl border border-white/10 bg-[#0f1a33] p-4"
-              style={{ boxShadow: fieldShadow }}
-            >
-              <p className="mb-2 text-[11px] font-medium uppercase tracking-[0.16em] text-white/35">
-                Amount
-              </p>
-
-              <input
-                value={amount}
-                onChange={(e) => handleAmountChange(e.target.value)}
-                inputMode="numeric"
-                placeholder="Enter amount (৳)"
-                className="h-11 w-full rounded-2xl border border-white/10 bg-[#101d38] px-4 text-sm outline-none placeholder:text-white/35"
-                style={{ boxShadow: fieldShadow }}
-              />
-
-              {belowMinAmount && (
-                <div
-                  className="mt-3 rounded-2xl border border-[#ef4444]/20 bg-[#ef4444]/10 px-4 py-3"
-                  style={{ boxShadow: fieldShadow }}
-                >
-                  <p className="text-sm font-semibold text-[#fca5a5]">
-                    Minimum withdraw amount is{" "}
-                    <span className="rounded-lg bg-[#ef4444]/20 px-2 py-0.5 text-white">
-                      ৳{formatMoney(minWithdraw)}
-                    </span>
-                    .
-                  </p>
-                </div>
-              )}
-
-              {nAmount > withdrawBalance && (
-                <div
-                  className="mt-3 rounded-2xl border border-[#ef4444]/20 bg-[#ef4444]/10 px-4 py-3"
-                  style={{ boxShadow: fieldShadow }}
-                >
-                  <p className="text-sm font-semibold text-[#fca5a5]">
-                    Withdraw amount exceeds your withdraw balance.
-                  </p>
-                </div>
-              )}
-
-              {limitStats.isAmountLimited && !limitStats.isAmountBlocked && nAmount > (limitStats.remainingWithdrawAmount || 0) && (
-                <div
-                  className="mt-3 rounded-2xl border border-[#f59e0b]/25 bg-[#f59e0b]/10 px-4 py-3"
-                  style={{ boxShadow: fieldShadow }}
-                >
-                  <p className="text-sm font-semibold text-[#fde68a]">
-                    You can withdraw up to ৳{formatMoney(limitStats.remainingWithdrawAmount || 0)} now within the last 24-hour amount limit.
-                  </p>
-                </div>
-              )}
-            </div>
-
-            <div
-              className="rounded-2xl border border-white/10 bg-[#0f1a33] p-4"
-              style={{ boxShadow: fieldShadow }}
-            >
-              <p className="mb-2 text-[11px] font-medium uppercase tracking-[0.16em] text-white/35">
-                Mobile Number
-              </p>
-
-              <div className="flex items-center gap-2">
-                <div
-                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-[#101d38] text-[#60a5fa]"
-                  style={{ boxShadow: fieldShadow }}
-                >
-                  <HiOutlinePhone className="text-base" />
-                </div>
-
-                <input
-                  value={number}
-                  onChange={(e) => handleNumberChange(e.target.value)}
-                  inputMode="numeric"
-                  placeholder={`Enter ${method === "bkash" ? "bKash" : "Nagad"} number`}
-                  className="h-11 w-full rounded-2xl border border-white/10 bg-[#101d38] px-4 text-sm outline-none placeholder:text-white/35"
-                  style={{ boxShadow: fieldShadow }}
-                />
-              </div>
-            </div>
-
-            {showFeePreview && (
+            {isRecharge && (
               <div
-                className="rounded-2xl border border-[#60a5fa]/20 bg-[linear-gradient(180deg,#12315f_0%,#0f1d37_100%)] px-4 py-3"
+                className="rounded-[10px] border border-white/10 bg-[#0f1a33] p-4"
                 style={{ boxShadow: fieldShadow }}
               >
-                <p className="text-sm font-semibold leading-relaxed text-[#dbeafe]">
-                  Withdraw fee{" "}
-                  <span className="rounded-lg bg-white/10 px-2 py-0.5 text-white">
-                    {withdrawFeePercent}%
-                  </span>
-                  {" "}means ৳{formatMoney(nAmount)} - ৳{formatMoney(feeAmount)} ={" "}
-                  <span className="rounded-lg bg-[#22c55e]/20 px-2 py-0.5 font-extrabold text-[#bbf7d0]">
-                    You will receive ৳{formatMoney(receiveAmount)}
-                  </span>
+                <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-white/35">
+                  Select mobile operator
                 </p>
+                <div className="mt-3 grid grid-cols-2 gap-2">
+                  {rechargeOperators.map((item) => {
+                    const active = operator === item.key
+
+                    return (
+                      <button
+                        key={item.key}
+                        type="button"
+                        onClick={() => setOperator(item.key)}
+                        className={`h-11 rounded-md border px-3 text-sm font-semibold transition ${
+                          active
+                            ? "border-[#22c55e]/35 bg-[#22c55e]/15 text-[#bbf7d0]"
+                            : "border-white/10 bg-[#101a31] text-white/75 hover:brightness-[1.03]"
+                        }`}
+                        style={{ boxShadow: fieldShadow }}
+                      >
+                        {item.label}
+                      </button>
+                    )
+                  })}
+                </div>
+                {!operator ? (
+                  <p className="mt-2 text-xs text-white/45">
+                    Please select one operator for mobile recharge.
+                  </p>
+                ) : null}
               </div>
             )}
+
+            <label className="block space-y-2">
+              <span className="text-[11px] font-medium uppercase tracking-[0.18em] text-white/35">
+                Mobile Number
+              </span>
+              <div
+                className="flex h-12 items-center rounded-md border border-white/10 bg-[#0f1a33] px-4"
+                style={{ boxShadow: fieldShadow }}
+              >
+                <input
+                  type="tel"
+                  inputMode="numeric"
+                  placeholder="01XXXXXXXXX"
+                  value={number}
+                  onChange={(e) => handleNumberChange(e.target.value)}
+                  className="w-full bg-transparent text-sm font-medium text-white outline-none placeholder:text-white/35"
+                />
+              </div>
+            </label>
+
+            <label className="block space-y-2">
+              <span className="text-[11px] font-medium uppercase tracking-[0.18em] text-white/35">
+                Amount
+              </span>
+              <div
+                className="flex h-12 items-center rounded-md border border-white/10 bg-[#0f1a33] px-4"
+                style={{ boxShadow: fieldShadow }}
+              >
+                <HiOutlineCash className="mr-3 shrink-0 text-[#60a5fa]" />
+                <input
+                  type="tel"
+                  inputMode="numeric"
+                  placeholder="Enter amount"
+                  value={amount}
+                  onChange={(e) => handleAmountChange(e.target.value)}
+                  className="w-full bg-transparent text-sm font-medium text-white outline-none placeholder:text-white/35"
+                />
+              </div>
+            </label>
+
+            {mustUseRecharge ? (
+              <div
+                className="rounded-md border border-[#22c55e]/20 bg-[#22c55e]/10 px-4 py-3"
+                style={{ boxShadow: fieldShadow }}
+              >
+                <p className="text-sm font-semibold text-[#bbf7d0]">
+                  This request will go as mobile recharge because the amount is below ৳{formatMoney(rechargeThreshold)}.
+                </p>
+              </div>
+            ) : null}
+
+            {belowMinimumForCashout ? (
+              <p className="text-xs text-[#fca5a5]">
+                Minimum cash withdraw is ৳{formatMoney(minWithdraw)}.
+              </p>
+            ) : null}
+
+            {!amountWithinBalance && nAmount > 0 ? (
+              <p className="text-xs text-[#fca5a5]">
+                Withdraw amount exceeds your available withdraw balance.
+              </p>
+            ) : null}
+
+            {showPreview ? (
+              <div
+                className="rounded-[10px] border border-white/10 bg-[#0f1a33] p-4"
+                style={{ boxShadow: fieldShadow }}
+              >
+                <div className="flex items-center justify-between gap-3 text-sm">
+                  <span className="text-white/60">Method</span>
+                  <span className="font-semibold text-white">
+                    {formatMethodLabel(method, operator, rechargeOperators)}
+                  </span>
+                </div>
+                <div className="mt-2 flex items-center justify-between gap-3 text-sm">
+                  <span className="text-white/60">Number</span>
+                  <span className="font-semibold text-white">{number}</span>
+                </div>
+                <div className="mt-2 flex items-center justify-between gap-3 text-sm">
+                  <span className="text-white/60">Fee</span>
+                  <span className="font-semibold text-white">
+                    {feePercentToUse}% • ৳{formatMoney(feeAmount)}
+                  </span>
+                </div>
+                <div className="mt-3 rounded-md border border-[#22c55e]/15 bg-[#22c55e]/10 px-4 py-3 text-sm text-[#bbf7d0]">
+                  <span className="font-medium">{isRecharge ? "Recharge amount" : "You will receive"}</span>{" "}
+                  <span className="rounded-md bg-white/10 px-2 py-0.5 font-extrabold text-[#bbf7d0]">
+                    ৳{formatMoney(receiveAmount)}
+                  </span>
+                </div>
+              </div>
+            ) : null}
 
             <button
               type="button"
               onClick={handleWithdrawRequest}
               disabled={!canSubmit}
-              className={`flex h-12 w-full items-center justify-center gap-2 rounded-2xl font-semibold transition ${
+              className={`flex h-12 w-full items-center justify-center gap-2 rounded-md font-semibold transition ${
                 canSubmit
                   ? "bg-[#3b82f6] text-white hover:brightness-[1.03] active:translate-y-[1px]"
                   : "cursor-not-allowed bg-[#101d38] text-white/30"
@@ -473,13 +548,17 @@ export default function WithdrawPage() {
               style={{ boxShadow: canSubmit ? btnShadow : fieldShadow }}
             >
               <HiArrowUp className="text-lg" />
-              {submitting ? "Processing..." : "Withdraw Request"}
+              {submitting
+                ? "Processing..."
+                : isRecharge
+                ? "Submit Recharge Request"
+                : "Withdraw Request"}
             </button>
           </div>
         </section>
 
         <section
-          className="rounded-[28px] border border-white/10 bg-[#0a1428] p-6 sm:p-7"
+          className="rounded-[10px] border border-white/10 bg-[#0a1428] p-5 sm:p-6"
           style={{ boxShadow: formShadow }}
         >
           <div className="flex items-center justify-between">
@@ -494,7 +573,7 @@ export default function WithdrawPage() {
           <div className="mt-4 space-y-3">
             {!loading && history.length === 0 ? (
               <div
-                className="rounded-2xl border border-white/10 bg-[#0f1a33] p-4 text-sm text-white/55"
+                className="rounded-md border border-white/10 bg-[#0f1a33] p-4 text-sm text-white/55"
                 style={{ boxShadow: fieldShadow }}
               >
                 No withdraw requests yet.
@@ -503,7 +582,7 @@ export default function WithdrawPage() {
               history.map((item) => (
                 <div
                   key={item.id}
-                  className="rounded-2xl border border-white/10 bg-[#0f1a33] p-4"
+                  className="rounded-md border border-white/10 bg-[#0f1a33] p-4"
                   style={{ boxShadow: fieldShadow }}
                 >
                   <div className="flex items-start justify-between gap-3">
@@ -512,10 +591,10 @@ export default function WithdrawPage() {
                         ৳{formatMoney(item.amount)}
                       </p>
                       <p className="mt-1 text-xs text-white/55">
-                        {item.method === "bkash" ? "bKash" : "Nagad"} • {item.number}
+                        {item.methodLabel || formatMethodLabel(item.method, item.operator, rechargeOperators)} • {item.number}
                       </p>
                       <p className="mt-1 text-[11px] text-white/35">
-                        Fee {item.feePercent || 0}% • You receive ৳
+                        Fee {item.feePercent || 0}% • {item.method === "recharge" ? "Recharge" : "Receive"} ৳
                         {formatMoney(item.payableAmount ?? item.amount)}
                       </p>
                       <p className="mt-1 text-[11px] text-white/35">
@@ -531,13 +610,13 @@ export default function WithdrawPage() {
         </section>
       </div>
 
-      {limitModal && (
+      {limitModal ? (
         <LimitModal
           data={limitModal}
           countdown={countdown}
           onClose={() => setLimitModal(null)}
         />
-      )}
+      ) : null}
     </main>
   )
 }
@@ -545,7 +624,7 @@ export default function WithdrawPage() {
 function StatBox({ label, value, hint }) {
   return (
     <div
-      className="rounded-2xl border border-white/10 bg-[#0f1a33] p-4"
+      className="rounded-md border border-white/10 bg-[#0f1a33] p-4"
       style={{ boxShadow: fieldShadow }}
     >
       <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-white/35">
@@ -559,13 +638,12 @@ function StatBox({ label, value, hint }) {
 
 function ProgressCard({ title, current, total, percent, unit, money = false }) {
   const unlimited = !Number(total)
-
   const currentText = money ? `৳${formatMoney(current)}` : formatMoney(current)
   const totalText = money ? `৳${formatMoney(total)}` : formatMoney(total)
 
   return (
     <div
-      className="rounded-2xl border border-white/10 bg-[#0f1a33] p-4"
+      className="rounded-md border border-white/10 bg-[#0f1a33] p-4"
       style={{ boxShadow: fieldShadow }}
     >
       <div className="flex items-center justify-between gap-3">
@@ -577,27 +655,36 @@ function ProgressCard({ title, current, total, percent, unit, money = false }) {
 
       <div className="mt-3 h-3 overflow-hidden rounded-full bg-white/8">
         <div
-          className={`h-full rounded-full ${percent >= 100 ? "bg-[#ef4444]" : percent >= 80 ? "bg-[#f59e0b]" : "bg-[#3b82f6]"}`}
+          className={`h-full rounded-full ${
+            percent >= 100
+              ? "bg-[#ef4444]"
+              : percent >= 80
+              ? "bg-[#f59e0b]"
+              : "bg-[#3b82f6]"
+          }`}
           style={{ width: unlimited ? "0%" : `${Math.max(0, Math.min(percent, 100))}%` }}
         />
       </div>
 
       <p className="mt-2 text-[12px] text-white/55">
-        {unlimited ? `No ${unit} limit configured.` : `${percent}% of your ${unit} limit is already used.`}
+        {unlimited
+          ? `No ${unit} limit configured.`
+          : `${percent}% of your ${unit} limit is already used.`}
       </p>
     </div>
   )
 }
 
 function LimitModal({ data, countdown, onClose }) {
-  const showCurrentAllowed = !data?.countWouldBlock && Number(data?.currentAllowedAmount || 0) > 0
+  const showCurrentAllowed =
+    !data?.countWouldBlock && Number(data?.currentAllowedAmount || 0) > 0
 
   return (
     <div className="fixed inset-0 z-50 grid place-items-center px-3">
       <div className="absolute inset-0 bg-black/65 backdrop-blur-sm" onClick={onClose} />
 
       <div
-        className="relative w-full max-w-[360px] rounded-[22px] border border-white/10 bg-[#0a1428] p-4"
+        className="relative w-full max-w-[360px] rounded-[10px] border border-white/10 bg-[#0a1428] p-4"
         style={{ boxShadow: "0 30px 120px rgba(0,0,0,.7)" }}
       >
         <div className="flex items-start justify-between gap-2">
@@ -613,7 +700,7 @@ function LimitModal({ data, countdown, onClose }) {
           <button
             type="button"
             onClick={onClose}
-            className="grid h-9 w-9 place-items-center rounded-xl border border-white/10 bg-[#0f1a33] text-white/65 transition hover:text-white"
+            className="grid h-9 w-9 place-items-center rounded-md border border-white/10 bg-[#0f1a33] text-white/65 transition hover:text-white"
             style={{ boxShadow: fieldShadow }}
             aria-label="Close"
           >
@@ -623,12 +710,14 @@ function LimitModal({ data, countdown, onClose }) {
 
         <div className="mt-4 space-y-3">
           <div
-            className="rounded-2xl border border-[#f59e0b]/25 bg-[#f59e0b]/10 px-4 py-3"
+            className="rounded-md border border-[#f59e0b]/25 bg-[#f59e0b]/10 px-4 py-3"
             style={{ boxShadow: fieldShadow }}
           >
             <div className="flex items-center gap-2 text-[#fde68a]">
               <HiOutlineClock className="text-base" />
-              <p className="text-sm font-semibold">Try again after {countdown || data?.retryInText || "some time"}</p>
+              <p className="text-sm font-semibold">
+                Try again after {countdown || data?.retryInText || "some time"}
+              </p>
             </div>
             {data?.retryAtText ? (
               <p className="mt-1 text-[12px] text-[#fde68a]/90">
@@ -638,17 +727,26 @@ function LimitModal({ data, countdown, onClose }) {
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <MiniInfo label="Used Requests" value={`${data?.last24HourWithdrawCount || 0}/${data?.dailyWithdrawCountLimit ? data.dailyWithdrawCountLimit : "∞"}`} />
-            <MiniInfo label="Used Amount" value={`৳${formatMoney(data?.last24HourWithdrawAmount || 0)}`} />
+            <MiniInfo
+              label="Used Requests"
+              value={`${data?.last24HourWithdrawCount || 0}/${data?.dailyWithdrawCountLimit ? data.dailyWithdrawCountLimit : "∞"}`}
+            />
+            <MiniInfo
+              label="Used Amount"
+              value={`৳${formatMoney(data?.last24HourWithdrawAmount || 0)}`}
+            />
           </div>
 
           {data?.dailyMaxWithdrawLimit ? (
-            <MiniInfo label="Amount Limit" value={`৳${formatMoney(data.dailyMaxWithdrawLimit)}`} />
+            <MiniInfo
+              label="Amount Limit"
+              value={`৳${formatMoney(data.dailyMaxWithdrawLimit)}`}
+            />
           ) : null}
 
           {showCurrentAllowed ? (
             <div
-              className="rounded-2xl border border-[#22c55e]/25 bg-[#22c55e]/10 px-4 py-3"
+              className="rounded-md border border-[#22c55e]/25 bg-[#22c55e]/10 px-4 py-3"
               style={{ boxShadow: fieldShadow }}
             >
               <p className="text-sm font-semibold text-[#bbf7d0]">
@@ -670,7 +768,7 @@ function LimitModal({ data, countdown, onClose }) {
 function MiniInfo({ label, value }) {
   return (
     <div
-      className="rounded-2xl border border-white/10 bg-[#0f1a33] px-4 py-3"
+      className="rounded-md border border-white/10 bg-[#0f1a33] px-4 py-3"
       style={{ boxShadow: fieldShadow }}
     >
       <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-white/35">
@@ -682,20 +780,30 @@ function MiniInfo({ label, value }) {
 }
 
 function StatusPill({ status }) {
-  const s = String(status || "").toLowerCase()
+  const value = String(status || "").toLowerCase()
 
   const cls =
-    s === "pending"
+    value === "pending"
       ? "border-[#f59e0b]/25 bg-[#f59e0b]/10 text-[#fcd34d]"
-      : s === "rejected"
+      : value === "rejected"
       ? "border-[#ef4444]/25 bg-[#ef4444]/10 text-[#fca5a5]"
       : "border-[#60a5fa]/25 bg-[#3b82f6]/10 text-[#93c5fd]"
 
   return (
     <span className={`shrink-0 rounded-full border px-3 py-1 text-[10px] font-semibold ${cls}`}>
-      {s || "pending"}
+      {value || "pending"}
     </span>
   )
+}
+
+function formatMethodLabel(method, operator, operators = fallbackOperators) {
+  if (method === "bkash") return "bKash"
+  if (method === "nagad") return "Nagad"
+  if (method === "recharge") {
+    const operatorLabel = operators.find((item) => item.key === operator)?.label || "Recharge"
+    return operator ? `Recharge • ${operatorLabel}` : "Recharge"
+  }
+  return "Unknown"
 }
 
 function formatDate(value) {

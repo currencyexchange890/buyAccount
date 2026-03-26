@@ -43,7 +43,7 @@ export default function DownloadPage() {
         </div>
 
         <div
-          className="rounded-[28px] border border-white/10 bg-[#0a1428] p-6 sm:p-7"
+          className="rounded-[10px] border border-white/10 bg-[#0a1428] p-6 sm:p-7"
           style={{ boxShadow: formShadow }}
         >
           <div className="flex items-start justify-between gap-3">
@@ -55,7 +55,7 @@ export default function DownloadPage() {
             </div>
 
             <div
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-[#0f1a33] text-[#60a5fa]"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-white/10 bg-[#0f1a33] text-[#60a5fa]"
               style={{ boxShadow: fieldShadow }}
             >
               <HiOutlineShieldCheck className="text-xl" />
@@ -73,7 +73,7 @@ export default function DownloadPage() {
             ))}
 
             <div
-              className="rounded-2xl border border-white/10 bg-[#0f1a33] p-4"
+              className="rounded-md border border-white/10 bg-[#0f1a33] p-4"
               style={{ boxShadow: fieldShadow }}
             >
               <div className="flex items-center justify-between gap-3">
@@ -115,7 +115,7 @@ export default function DownloadPage() {
               <button
                 type="button"
                 disabled={!activeApp}
-                className={`mt-4 h-12 w-full rounded-2xl font-semibold text-white transition active:translate-y-[1px] ${
+                className={`mt-4 h-12 w-full rounded-md font-semibold text-white transition active:translate-y-[1px] ${
                   activeApp
                     ? "bg-[#3b82f6] hover:brightness-[1.03]"
                     : "bg-[#101d38] text-white/45 cursor-not-allowed"
@@ -137,7 +137,7 @@ function DownloadCard({ title, active, onClick }) {
     <button
       type="button"
       onClick={onClick}
-      className={`w-full rounded-2xl border px-4 py-3.5 flex items-center justify-between gap-3 transition ${
+      className={`w-full rounded-md border px-4 py-3.5 flex items-center justify-between gap-3 transition ${
         active
           ? "border-[#60a5fa]/30 bg-[#3b82f6] text-white"
           : "border-white/10 bg-[#0f1a33] text-white/90 hover:text-white"
@@ -149,7 +149,7 @@ function DownloadCard({ title, active, onClick }) {
       </div>
 
       <div
-        className={`grid h-11 w-11 shrink-0 place-items-center rounded-2xl border ${
+        className={`grid h-11 w-11 shrink-0 place-items-center rounded-md border ${
           active
             ? "border-white/15 bg-white/10 text-white"
             : "border-white/10 bg-[#101d38] text-[#60a5fa]"

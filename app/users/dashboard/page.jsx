@@ -209,7 +209,7 @@ export default function DashboardPage() {
         </div>
 
         <section
-          className="rounded-[24px] border border-white/10 bg-[#0a1428] p-3 sm:p-4"
+          className="rounded-[10px] border border-white/10 bg-[#0a1428] p-3 sm:p-4"
           style={{ boxShadow: formShadow }}
         >
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
@@ -224,12 +224,12 @@ export default function DashboardPage() {
             </div>
 
             <div
-              className="rounded-[18px] border border-white/10 bg-[#0f1a33] p-3"
+              className="rounded-[10px] border border-white/10 bg-[#0f1a33] p-3"
               style={{ boxShadow: fieldShadow }}
             >
               <div className="flex items-center gap-2">
                 <div
-                  className="grid h-10 w-10 place-items-center rounded-2xl border border-white/10 bg-[#101d38] text-[#60a5fa]"
+                  className="grid h-10 w-10 place-items-center rounded-md border border-white/10 bg-[#101d38] text-[#60a5fa]"
                   style={{ boxShadow: fieldShadow }}
                 >
                   <HiOutlineUser className="text-lg" />
@@ -263,16 +263,16 @@ export default function DashboardPage() {
               ? Array.from({ length: 8 }).map((_, i) => (
                   <div
                     key={i}
-                    className="rounded-[16px] border border-white/10 bg-[#0f1a33] p-2.5"
+                    className="rounded-[10px] border border-white/10 bg-[#0f1a33] p-2.5"
                     style={{ boxShadow: fieldShadow }}
                   >
-                    <div className="h-20 animate-pulse rounded-xl bg-white/5" />
+                    <div className="h-20 animate-pulse rounded-md bg-white/5" />
                   </div>
                 ))
               : stats.map(({ title, value, sub, Icon }) => (
                   <div
                     key={title}
-                    className="rounded-[16px] border border-white/10 bg-[#0f1a33] p-2.5"
+                    className="rounded-[10px] border border-white/10 bg-[#0f1a33] p-2.5"
                     style={{ boxShadow: fieldShadow }}
                   >
                     <div className="mb-2 flex items-start justify-between gap-2">
@@ -281,7 +281,7 @@ export default function DashboardPage() {
                       </div>
 
                       <div
-                        className="grid h-8 w-8 shrink-0 place-items-center rounded-xl border border-white/10 bg-[#101d38] text-[#60a5fa]"
+                        className="grid h-8 w-8 shrink-0 place-items-center rounded-md border border-white/10 bg-[#101d38] text-[#60a5fa]"
                         style={{ boxShadow: fieldShadow }}
                       >
                         <Icon className="text-sm" />
@@ -298,7 +298,7 @@ export default function DashboardPage() {
         </section>
 
         <section
-          className="mt-4 rounded-[24px] border border-white/10 bg-[#0a1428] p-3 sm:p-4"
+          className="mt-4 rounded-[10px] border border-white/10 bg-[#0a1428] p-3 sm:p-4"
           style={{ boxShadow: formShadow }}
         >
           <div className="mb-4">
@@ -313,10 +313,10 @@ export default function DashboardPage() {
               {Array.from({ length: 3 }).map((_, i) => (
                 <div
                   key={i}
-                  className="rounded-[18px] border border-white/10 bg-[#0f1a33] p-4"
+                  className="rounded-[10px] border border-white/10 bg-[#0f1a33] p-4"
                   style={{ boxShadow: fieldShadow }}
                 >
-                  <div className="h-24 animate-pulse rounded-xl bg-white/5" />
+                  <div className="h-24 animate-pulse rounded-md bg-white/5" />
                 </div>
               ))}
             </div>
@@ -352,7 +352,7 @@ export default function DashboardPage() {
         </section>
 
         <section
-          className="mt-4 rounded-[24px] border border-white/10 bg-[#0a1428] p-3 sm:p-4"
+          className="mt-4 rounded-[10px] border border-white/10 bg-[#0a1428] p-3 sm:p-4"
           style={{ boxShadow: formShadow }}
         >
           <div className="mb-4 flex items-center justify-between gap-3">
@@ -375,15 +375,15 @@ export default function DashboardPage() {
               Array.from({ length: 4 }).map((_, i) => (
                 <div
                   key={i}
-                  className="rounded-2xl border border-white/10 bg-[#0f1a33] p-4"
+                  className="rounded-md border border-white/10 bg-[#0f1a33] p-4"
                   style={{ boxShadow: fieldShadow }}
                 >
-                  <div className="h-16 animate-pulse rounded-xl bg-white/5" />
+                  <div className="h-16 animate-pulse rounded-md bg-white/5" />
                 </div>
               ))
             ) : !data?.recentActivities?.length ? (
               <div
-                className="rounded-2xl border border-white/10 bg-[#0f1a33] p-4 text-sm text-white/55"
+                className="rounded-md border border-white/10 bg-[#0f1a33] p-4 text-sm text-white/55"
                 style={{ boxShadow: fieldShadow }}
               >
                 No recent activity found.
@@ -392,7 +392,7 @@ export default function DashboardPage() {
               data.recentActivities.map((item) => (
                 <div
                   key={item.id}
-                  className="rounded-2xl border border-white/10 bg-[#0f1a33] p-4"
+                  className="rounded-md border border-white/10 bg-[#0f1a33] p-4"
                   style={{ boxShadow: fieldShadow }}
                 >
                   <div className="flex items-start justify-between gap-3">
@@ -448,7 +448,7 @@ function SummaryCard({
 
   return (
     <div
-      className="rounded-[18px] border border-white/10 bg-[#0f1a33] p-4"
+      className="rounded-[10px] border border-white/10 bg-[#0f1a33] p-4"
       style={{ boxShadow: fieldShadow }}
     >
       <p className="text-[11px] uppercase tracking-[0.14em] text-white/40">{title}</p>
@@ -469,7 +469,7 @@ function SummaryCard({
 function FlowCard({ todayInflow, todayOutflow, todayNetFlow }) {
   return (
     <div
-      className="rounded-[18px] border border-white/10 bg-[#0f1a33] p-4"
+      className="rounded-[10px] border border-white/10 bg-[#0f1a33] p-4"
       style={{ boxShadow: fieldShadow }}
     >
       <p className="text-[11px] uppercase tracking-[0.14em] text-white/40">
@@ -495,7 +495,7 @@ function FlowRow({ label, value, tone }) {
 
   return (
     <div
-      className="flex items-center justify-between rounded-2xl border border-white/10 bg-[#101d38] px-3 py-2.5"
+      className="flex items-center justify-between rounded-md border border-white/10 bg-[#101d38] px-3 py-2.5"
       style={{ boxShadow: fieldShadow }}
     >
       <p className="text-sm text-white/70">{label}</p>
@@ -514,7 +514,7 @@ function TinyStat({ label, value, tone }) {
 
   return (
     <div
-      className="rounded-2xl border border-white/10 bg-[#101d38] px-2 py-2 text-center"
+      className="rounded-md border border-white/10 bg-[#101d38] px-2 py-2 text-center"
       style={{ boxShadow: fieldShadow }}
     >
       <p className="text-[10px] text-white/40">{label}</p>

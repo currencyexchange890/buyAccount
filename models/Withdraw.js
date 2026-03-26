@@ -35,8 +35,14 @@ const WithdrawSchema = new mongoose.Schema(
     },
     method: {
       type: String,
-      enum: ["bkash", "nagad"],
+      enum: ["bkash", "nagad", "recharge"],
       required: true,
+    },
+    operator: {
+      type: String,
+      enum: ["grameenphone", "robi", "airtel", "teletalk", "banglalink", ""],
+      default: "",
+      trim: true,
     },
     status: {
       type: String,

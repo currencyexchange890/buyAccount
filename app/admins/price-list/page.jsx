@@ -409,7 +409,7 @@ export default function PriceListPage() {
         </div>
 
         <section
-          className="rounded-[28px] border border-white/10 bg-[#0a1428] p-4 sm:p-5"
+          className="rounded-[10px] border border-white/10 bg-[#0a1428] p-4 sm:p-5"
           style={{ boxShadow: shellShadow }}
         >
           <div className="mb-5">
@@ -423,7 +423,7 @@ export default function PriceListPage() {
 
           {loading ? (
             <div
-              className="rounded-[24px] border border-white/10 bg-[#0f1a33] p-5 text-center text-white/60"
+              className="rounded-[10px] border border-white/10 bg-[#0f1a33] p-5 text-center text-white/60"
               style={{ boxShadow: cardShadow }}
             >
               Loading price list...
@@ -444,7 +444,7 @@ export default function PriceListPage() {
                         key={name}
                         type="button"
                         onClick={() => onFormChange("packageName", name)}
-                        className={`rounded-2xl border px-2 py-3 text-center text-[12px] font-semibold transition sm:text-[13px] ${
+                        className={`rounded-md border px-2 py-3 text-center text-[12px] font-semibold transition sm:text-[13px] ${
                           selected
                             ? "border-[#60a5fa] bg-[#13203e] text-[#60a5fa]"
                             : "border-white/10 bg-[#0f1a33] text-white/85 hover:border-white/15"
@@ -464,7 +464,7 @@ export default function PriceListPage() {
                     Price
                   </label>
                   <div
-                    className="flex h-12 items-center gap-2 rounded-2xl border border-white/10 bg-[#0f1a33] px-4"
+                    className="flex h-12 items-center gap-2 rounded-md border border-white/10 bg-[#0f1a33] px-4"
                     style={{ boxShadow: cardShadow }}
                   >
                     <HiOutlineCash className="shrink-0 text-[#60a5fa]" />
@@ -484,7 +484,7 @@ export default function PriceListPage() {
                     Validity Hours
                   </label>
                   <div
-                    className="flex h-12 items-center gap-2 rounded-2xl border border-white/10 bg-[#0f1a33] px-4"
+                    className="flex h-12 items-center gap-2 rounded-md border border-white/10 bg-[#0f1a33] px-4"
                     style={{ boxShadow: cardShadow }}
                   >
                     <HiOutlineClock className="shrink-0 text-[#60a5fa]" />
@@ -501,7 +501,7 @@ export default function PriceListPage() {
               </div>
 
               <div
-                className="rounded-[24px] border border-white/10 bg-[#0f1a33] p-3 sm:p-4"
+                className="rounded-[10px] border border-white/10 bg-[#0f1a33] p-3 sm:p-4"
                 style={{ boxShadow: cardShadow }}
               >
                 <div className="mb-3 flex items-center justify-between gap-3">
@@ -515,7 +515,7 @@ export default function PriceListPage() {
                   <button
                     type="button"
                     onClick={addResourceRow}
-                    className="flex h-10 items-center gap-2 rounded-2xl bg-[#3b82f6] px-4 text-sm font-semibold text-white"
+                    className="flex h-10 items-center gap-2 rounded-md bg-[#3b82f6] px-4 text-sm font-semibold text-white"
                     style={{ boxShadow: btnShadow }}
                   >
                     <HiOutlinePlus className="text-base" />
@@ -540,7 +540,7 @@ export default function PriceListPage() {
                     return (
                       <div
                         key={row.rowId}
-                        className="rounded-[20px] border border-white/10 bg-[#101a31] p-3"
+                        className="rounded-[10px] border border-white/10 bg-[#101a31] p-3"
                         style={{ boxShadow: cardShadow }}
                       >
                         <div className="mb-3 flex items-center justify-between gap-3">
@@ -557,7 +557,7 @@ export default function PriceListPage() {
                             <button
                               type="button"
                               onClick={() => removeResourceRow(row.rowId)}
-                              className="grid h-9 w-9 place-items-center rounded-xl border border-white/10 bg-[#1a2644] text-[#f87171]"
+                              className="grid h-9 w-9 place-items-center rounded-md border border-white/10 bg-[#1a2644] text-[#f87171]"
                               style={{ boxShadow: cardShadow }}
                             >
                               <HiOutlineTrash className="text-sm" />
@@ -575,7 +575,7 @@ export default function PriceListPage() {
                                   key={resource.fileName}
                                   type="button"
                                   onClick={() => selectResource(row.rowId, resource.fileName)}
-                                  className={`relative flex h-[64px] w-[64px] shrink-0 items-center justify-center overflow-hidden rounded-[14px] border p-1.5 transition sm:h-[72px] sm:w-[72px] ${
+                                  className={`relative flex h-[64px] w-[64px] shrink-0 items-center justify-center overflow-hidden rounded-[10px] border p-1.5 transition sm:h-[72px] sm:w-[72px] ${
                                     selected
                                       ? "border-[#60a5fa] bg-[#13203e]"
                                       : "border-white/10 bg-[#0f1730]"
@@ -611,7 +611,7 @@ export default function PriceListPage() {
 
                         {selectedResource && (
                           <div
-                            className="mt-2 rounded-2xl border border-[#22c55e]/20 bg-[#143222] px-3 py-2"
+                            className="mt-2 rounded-md border border-[#22c55e]/20 bg-[#143222] px-3 py-2"
                             style={{ boxShadow: cardShadow }}
                           >
                             <p className="text-[12px] font-semibold text-[#bbf7d0]">
@@ -627,7 +627,7 @@ export default function PriceListPage() {
                               Minimum Quantity
                             </label>
                             <div
-                              className="flex h-11 items-center gap-2 rounded-2xl border border-white/10 bg-[#0f1a33] px-4"
+                              className="flex h-11 items-center gap-2 rounded-md border border-white/10 bg-[#0f1a33] px-4"
                               style={{ boxShadow: cardShadow }}
                             >
                               <HiOutlineCollection className="shrink-0 text-[#60a5fa]" />
@@ -649,7 +649,7 @@ export default function PriceListPage() {
                               Maximum Quantity
                             </label>
                             <div
-                              className="flex h-11 items-center gap-2 rounded-2xl border border-white/10 bg-[#0f1a33] px-4"
+                              className="flex h-11 items-center gap-2 rounded-md border border-white/10 bg-[#0f1a33] px-4"
                               style={{ boxShadow: cardShadow }}
                             >
                               <HiOutlineCollection className="shrink-0 text-[#60a5fa]" />
@@ -669,7 +669,7 @@ export default function PriceListPage() {
 
                         <div className="mt-3 grid grid-cols-2 gap-3">
                           <div
-                            className="rounded-2xl border border-white/10 bg-[#0f1a33] px-4 py-3"
+                            className="rounded-md border border-white/10 bg-[#0f1a33] px-4 py-3"
                             style={{ boxShadow: cardShadow }}
                           >
                             <p className="text-[11px] uppercase tracking-[0.12em] text-white/40">
@@ -681,7 +681,7 @@ export default function PriceListPage() {
                           </div>
 
                           <div
-                            className="rounded-2xl border border-white/10 bg-[#0f1a33] px-4 py-3"
+                            className="rounded-md border border-white/10 bg-[#0f1a33] px-4 py-3"
                             style={{ boxShadow: cardShadow }}
                           >
                             <p className="text-[11px] uppercase tracking-[0.12em] text-white/40">
@@ -699,13 +699,13 @@ export default function PriceListPage() {
               </div>
 
               <div
-                className="rounded-[24px] border border-white/10 bg-[#0f1a33] p-4"
+                className="rounded-[10px] border border-white/10 bg-[#0f1a33] p-4"
                 style={{ boxShadow: cardShadow }}
               >
                 <p className="text-sm font-semibold text-white">Package Resource Value</p>
                 <div className="mt-3 grid grid-cols-2 gap-3">
                   <div
-                    className="rounded-2xl border border-white/10 bg-[#101a31] px-4 py-3"
+                    className="rounded-md border border-white/10 bg-[#101a31] px-4 py-3"
                     style={{ boxShadow: cardShadow }}
                   >
                     <p className="text-[11px] uppercase tracking-[0.12em] text-white/40">
@@ -717,7 +717,7 @@ export default function PriceListPage() {
                   </div>
 
                   <div
-                    className="rounded-2xl border border-white/10 bg-[#101a31] px-4 py-3"
+                    className="rounded-md border border-white/10 bg-[#101a31] px-4 py-3"
                     style={{ boxShadow: cardShadow }}
                   >
                     <p className="text-[11px] uppercase tracking-[0.12em] text-white/40">
@@ -734,7 +734,7 @@ export default function PriceListPage() {
                 <button
                   type="submit"
                   disabled={saving}
-                  className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[#3b82f6] text-sm font-semibold text-white transition hover:brightness-[1.03] active:translate-y-[1px] disabled:cursor-not-allowed disabled:opacity-60"
+                  className="flex h-12 w-full items-center justify-center gap-2 rounded-md bg-[#3b82f6] text-sm font-semibold text-white transition hover:brightness-[1.03] active:translate-y-[1px] disabled:cursor-not-allowed disabled:opacity-60"
                   style={{ boxShadow: btnShadow }}
                 >
                   {editingId ? (
@@ -753,7 +753,7 @@ export default function PriceListPage() {
                   <button
                     type="button"
                     onClick={resetForm}
-                    className="mt-3 flex h-11 w-full items-center justify-center gap-2 rounded-2xl border border-white/10 bg-[#101a31] text-sm font-semibold text-white"
+                    className="mt-3 flex h-11 w-full items-center justify-center gap-2 rounded-md border border-white/10 bg-[#101a31] text-sm font-semibold text-white"
                     style={{ boxShadow: cardShadow }}
                   >
                     Cancel Edit
@@ -765,7 +765,7 @@ export default function PriceListPage() {
         </section>
 
         <section
-          className="mt-5 rounded-[28px] border border-white/10 bg-[#0a1428] p-4 sm:p-5"
+          className="mt-5 rounded-[10px] border border-white/10 bg-[#0a1428] p-4 sm:p-5"
           style={{ boxShadow: shellShadow }}
         >
           <div className="mb-4">
@@ -777,7 +777,7 @@ export default function PriceListPage() {
 
           {loading ? (
             <div
-              className="rounded-[22px] border border-white/10 bg-[#0f1a33] p-5 text-center text-white/50"
+              className="rounded-[10px] border border-white/10 bg-[#0f1a33] p-5 text-center text-white/50"
               style={{ boxShadow: cardShadow }}
             >
               Loading package history...
@@ -787,7 +787,7 @@ export default function PriceListPage() {
               {sortedPackages.map((item, index) => (
                 <div
                   key={item.id}
-                  className="rounded-[24px] border border-white/10 bg-[#0f1a33] p-3 sm:p-4"
+                  className="rounded-[10px] border border-white/10 bg-[#0f1a33] p-3 sm:p-4"
                   style={{ boxShadow: cardShadow }}
                 >
                   <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
@@ -816,7 +816,7 @@ export default function PriceListPage() {
                       <button
                         type="button"
                         onClick={() => handleEdit(item)}
-                        className="grid h-10 w-10 place-items-center rounded-2xl bg-[#3b82f6] text-white"
+                        className="grid h-10 w-10 place-items-center rounded-md bg-[#3b82f6] text-white"
                         style={{ boxShadow: btnShadow }}
                       >
                         <HiOutlinePencil className="text-base" />
@@ -825,7 +825,7 @@ export default function PriceListPage() {
                       <button
                         type="button"
                         onClick={() => setDeleteTarget(item)}
-                        className="grid h-10 w-10 place-items-center rounded-2xl bg-[#dc2626] text-white"
+                        className="grid h-10 w-10 place-items-center rounded-md bg-[#dc2626] text-white"
                         style={{
                           boxShadow:
                             "0 16px 30px rgba(220,38,38,.24), inset 1px 1px 0 rgba(255,255,255,.16), inset -1px -1px 0 rgba(0,0,0,.14)",
@@ -844,10 +844,10 @@ export default function PriceListPage() {
                       return (
                         <div
                           key={`${item.id}-${resource.rowId}`}
-                          className="rounded-[18px] border border-white/10 bg-[#101a31] p-2.5"
+                          className="rounded-[10px] border border-white/10 bg-[#101a31] p-2.5"
                           style={{ boxShadow: cardShadow }}
                         >
-                          <div className="relative mb-2 flex h-[68px] items-center justify-center overflow-hidden rounded-[14px] border border-white/10 bg-[#0f1730] p-2">
+                          <div className="relative mb-2 flex h-[68px] items-center justify-center overflow-hidden rounded-[10px] border border-white/10 bg-[#0f1730] p-2">
                             <img
                               src={resource.image}
                               alt={resource.resourceName}
@@ -881,7 +881,7 @@ export default function PriceListPage() {
 
               {!sortedPackages.length && (
                 <div
-                  className="rounded-[22px] border border-white/10 bg-[#0f1a33] p-5 text-center text-white/50"
+                  className="rounded-[10px] border border-white/10 bg-[#0f1a33] p-5 text-center text-white/50"
                   style={{ boxShadow: cardShadow }}
                 >
                   No package created yet
@@ -909,7 +909,7 @@ function DeleteConfirmModal({ item, onClose, onConfirm }) {
       <div className="absolute inset-0 bg-black/75 backdrop-blur-sm" onClick={onClose} />
 
       <div
-        className="relative w-full max-w-[340px] rounded-[24px] border border-white/10 bg-[#0a1428] p-4"
+        className="relative w-full max-w-[340px] rounded-[10px] border border-white/10 bg-[#0a1428] p-4"
         style={{ boxShadow: "0 30px 120px rgba(0,0,0,.72)" }}
       >
         <p className="text-[11px] uppercase tracking-[0.12em] text-white/45">
@@ -927,7 +927,7 @@ function DeleteConfirmModal({ item, onClose, onConfirm }) {
           <button
             type="button"
             onClick={onClose}
-            className="h-10 rounded-2xl border border-white/10 bg-[#101a31] text-sm font-semibold text-white"
+            className="h-10 rounded-md border border-white/10 bg-[#101a31] text-sm font-semibold text-white"
             style={{
               boxShadow:
                 "8px 8px 18px rgba(0,0,0,.32), -4px -4px 10px rgba(255,255,255,.025), inset 1px 1px 0 rgba(255,255,255,.05), inset -1px -1px 0 rgba(0,0,0,.24)",
@@ -939,7 +939,7 @@ function DeleteConfirmModal({ item, onClose, onConfirm }) {
           <button
             type="button"
             onClick={onConfirm}
-            className="h-10 rounded-2xl bg-[#dc2626] text-sm font-semibold text-white"
+            className="h-10 rounded-md bg-[#dc2626] text-sm font-semibold text-white"
             style={{
               boxShadow:
                 "0 16px 30px rgba(220,38,38,.24), inset 1px 1px 0 rgba(255,255,255,.16), inset -1px -1px 0 rgba(0,0,0,.14)",

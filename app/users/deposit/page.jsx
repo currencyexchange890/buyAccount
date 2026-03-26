@@ -210,11 +210,11 @@ export default function DepositPage() {
         </div>
 
         <section
-          className="rounded-[22px] border border-white/10 bg-[#0a1428] p-4"
+          className="rounded-[10px] border border-white/10 bg-[#0a1428] p-4"
           style={{ boxShadow: formShadow }}
         >
           <div
-            className="rounded-[18px] border border-[#60a5fa]/20 bg-[linear-gradient(180deg,#10203f_0%,#0f1a33_100%)] px-3 py-3"
+            className="rounded-[10px] border border-[#60a5fa]/20 bg-[linear-gradient(180deg,#10203f_0%,#0f1a33_100%)] px-3 py-3"
             style={{ boxShadow: fieldShadow }}
           >
             <p className="text-center text-sm font-semibold text-[#dbeafe]">
@@ -227,7 +227,7 @@ export default function DepositPage() {
 
           <div className="mt-4 space-y-2.5">
             <div
-              className="rounded-[18px] border border-white/10 bg-[#0f1a33] p-3"
+              className="rounded-[10px] border border-white/10 bg-[#0f1a33] p-3"
               style={{ boxShadow: fieldShadow }}
             >
               <p className="mb-1.5 text-[10px] font-medium uppercase tracking-[0.14em] text-white/35">
@@ -239,7 +239,7 @@ export default function DepositPage() {
                 onChange={(e) => handleAmountChange(e.target.value)}
                 inputMode="numeric"
                 placeholder="Enter amount (৳)"
-                className="h-10 w-full rounded-xl border border-white/10 bg-[#101d38] px-3 text-sm outline-none placeholder:text-white/35"
+                className="h-10 w-full rounded-md border border-white/10 bg-[#101d38] px-3 text-sm outline-none placeholder:text-white/35"
                 style={{ boxShadow: fieldShadow }}
               />
 
@@ -255,7 +255,7 @@ export default function DepositPage() {
             </div>
 
             <div
-              className="rounded-[18px] border border-white/10 bg-[#0f1a33] p-3"
+              className="rounded-[10px] border border-white/10 bg-[#0f1a33] p-3"
               style={{ boxShadow: fieldShadow }}
             >
               <p className="mb-2 text-[10px] font-medium uppercase tracking-[0.14em] text-white/35">
@@ -271,7 +271,7 @@ export default function DepositPage() {
                       key={item}
                       type="button"
                       onClick={() => setMethod(item)}
-                      className={`h-10 rounded-xl border text-sm font-semibold transition ${
+                      className={`h-10 rounded-md border text-sm font-semibold transition ${
                         active
                           ? "border-[#60a5fa]/30 bg-[#3b82f6] text-white"
                           : "border-white/10 bg-[#101d38] text-white/80 hover:text-white"
@@ -288,7 +288,7 @@ export default function DepositPage() {
                 type="button"
                 onClick={handleOpenPayNow}
                 disabled={!canOpenPayModal}
-                className={`mt-3 h-11 w-full rounded-xl font-semibold text-white transition ${
+                className={`mt-3 h-11 w-full rounded-md font-semibold text-white transition ${
                   canOpenPayModal
                     ? "bg-[#3b82f6] hover:brightness-[1.03] active:translate-y-[1px]"
                     : "cursor-not-allowed bg-[#101d38] text-white/35"
@@ -304,7 +304,7 @@ export default function DepositPage() {
         </section>
 
         <section
-          className="rounded-[22px] border border-white/10 bg-[#0a1428] p-4"
+          className="rounded-[10px] border border-white/10 bg-[#0a1428] p-4"
           style={{ boxShadow: formShadow }}
         >
           <div className="flex items-center justify-between">
@@ -319,7 +319,7 @@ export default function DepositPage() {
           <div className="mt-3 space-y-2">
             {!loading && history.length === 0 && (
               <div
-                className="rounded-[18px] border border-white/10 bg-[#0f1a33] p-3 text-sm text-white/55"
+                className="rounded-[10px] border border-white/10 bg-[#0f1a33] p-3 text-sm text-white/55"
                 style={{ boxShadow: fieldShadow }}
               >
                 No deposit history found.
@@ -329,7 +329,7 @@ export default function DepositPage() {
             {history.map((item) => (
               <div
                 key={item.id}
-                className="rounded-[18px] border border-white/10 bg-[#0f1a33] p-3"
+                className="rounded-[10px] border border-white/10 bg-[#0f1a33] p-3"
                 style={{ boxShadow: fieldShadow }}
               >
                 <div className="flex items-start justify-between gap-2">
@@ -359,11 +359,11 @@ export default function DepositPage() {
           onClose={() => setModalOpen(false)}
         >
           <div
-            className="rounded-[18px] border border-white/10 bg-[#0f1a33] p-3"
+            className="rounded-[10px] border border-white/10 bg-[#0f1a33] p-3"
             style={{ boxShadow: fieldShadow }}
           >
             <div
-              className="rounded-[18px] border border-[#60a5fa]/20 bg-[linear-gradient(180deg,#10203f_0%,#0f1a33_100%)] p-3"
+              className="rounded-[10px] border border-[#60a5fa]/20 bg-[linear-gradient(180deg,#10203f_0%,#0f1a33_100%)] p-3"
               style={{ boxShadow: fieldShadow }}
             >
               <p className="text-[10px] font-medium uppercase tracking-[0.16em] text-[#93c5fd]">
@@ -382,7 +382,7 @@ export default function DepositPage() {
             </div>
 
             <div
-              className="mt-3 rounded-xl border border-white/10 bg-[#101d38] p-3"
+              className="mt-3 rounded-md border border-white/10 bg-[#101d38] p-3"
               style={{ boxShadow: fieldShadow }}
             >
               <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-white/35">
@@ -397,7 +397,7 @@ export default function DepositPage() {
             </div>
 
             <div
-              className="mt-3 rounded-xl border border-white/10 bg-[#101d38] p-3"
+              className="mt-3 rounded-md border border-white/10 bg-[#101d38] p-3"
               style={{ boxShadow: fieldShadow }}
             >
               <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-white/35">
@@ -406,7 +406,7 @@ export default function DepositPage() {
 
               <div className="mt-2 flex items-center gap-2">
                 <div
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-[#0f1a33] text-[#60a5fa]"
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-white/10 bg-[#0f1a33] text-[#60a5fa]"
                   style={{ boxShadow: fieldShadow }}
                 >
                   <HiOutlinePhone className="text-base" />
@@ -417,7 +417,7 @@ export default function DepositPage() {
                   onChange={(e) => handleSenderChange(e.target.value)}
                   inputMode="numeric"
                   placeholder="01XXXXXXXXX"
-                  className="h-10 w-full rounded-xl border border-white/10 bg-[#0f1a33] px-3 text-sm outline-none placeholder:text-white/35"
+                  className="h-10 w-full rounded-md border border-white/10 bg-[#0f1a33] px-3 text-sm outline-none placeholder:text-white/35"
                   style={{ boxShadow: fieldShadow }}
                 />
               </div>
@@ -428,7 +428,7 @@ export default function DepositPage() {
             </div>
 
             <div
-              className="mt-3 rounded-[18px] border border-[#60a5fa]/20 bg-[linear-gradient(180deg,#12315f_0%,#0f1d37_100%)] p-3"
+              className="mt-3 rounded-[10px] border border-[#60a5fa]/20 bg-[linear-gradient(180deg,#12315f_0%,#0f1d37_100%)] p-3"
               style={{ boxShadow: fieldShadow }}
             >
               <p className="text-center text-sm font-semibold leading-6 text-[#dbeafe]">
@@ -444,7 +444,7 @@ export default function DepositPage() {
             type="button"
             onClick={handleVerifyDeposit}
             disabled={!canVerify}
-            className={`mt-3 h-11 w-full rounded-xl font-semibold text-white transition ${
+            className={`mt-3 h-11 w-full rounded-md font-semibold text-white transition ${
               canVerify
                 ? "bg-[#3b82f6] hover:brightness-[1.03] active:translate-y-[1px]"
                 : "cursor-not-allowed bg-[#101d38] text-white/35"
@@ -506,7 +506,7 @@ function CopyButton({ text }) {
     <button
       type="button"
       onClick={handleCopy}
-      className="copy-pulse flex h-10 items-center gap-1.5 rounded-xl border border-emerald-300/20 bg-[#22c55e] px-3 text-xs font-semibold text-white transition hover:brightness-105"
+      className="copy-pulse flex h-10 items-center gap-1.5 rounded-md border border-emerald-300/20 bg-[#22c55e] px-3 text-xs font-semibold text-white transition hover:brightness-105"
       style={{
         boxShadow:
           "0 14px 24px rgba(34,197,94,.24), inset 1px 1px 0 rgba(255,255,255,.16), inset -1px -1px 0 rgba(0,0,0,.14)",
@@ -525,7 +525,7 @@ function Modal({ title, onClose, children }) {
       <div className="absolute inset-0 bg-black/65 backdrop-blur-sm" />
 
       <div
-        className="relative w-full max-w-[360px] rounded-[22px] border border-white/10 bg-[#0a1428] p-4"
+        className="relative w-full max-w-[360px] rounded-[10px] border border-white/10 bg-[#0a1428] p-4"
         style={{ boxShadow: "0 30px 120px rgba(0,0,0,.7)" }}
       >
         <div className="flex items-start justify-between gap-2">
@@ -539,7 +539,7 @@ function Modal({ title, onClose, children }) {
           <button
             type="button"
             onClick={onClose}
-            className="grid h-9 w-9 place-items-center rounded-xl border border-white/10 bg-[#0f1a33] text-white/65 transition hover:text-white"
+            className="grid h-9 w-9 place-items-center rounded-md border border-white/10 bg-[#0f1a33] text-white/65 transition hover:text-white"
             style={{ boxShadow: fieldShadow }}
             aria-label="Close"
           >
@@ -564,7 +564,7 @@ function StatusPill({ status }) {
       : "border-[#60a5fa]/25 bg-[#3b82f6]/10 text-[#93c5fd]"
 
   return (
-    <span className={`shrink-0 rounded-xl border px-2.5 py-1 text-[10px] font-semibold ${cls}`}>
+    <span className={`shrink-0 rounded-md border px-2.5 py-1 text-[10px] font-semibold ${cls}`}>
       {capitalize(normalized)}
     </span>
   )

@@ -43,12 +43,12 @@ export default function ReferralPage() {
         </div>
 
         <section
-          className="rounded-[28px] border border-white/10 bg-[#0a1428] p-6 sm:p-7"
+          className="rounded-[10px] border border-white/10 bg-[#0a1428] p-6 sm:p-7"
           style={{ boxShadow: formShadow }}
         >
           <div className="text-center">
             <div
-              className="mx-auto grid h-14 w-14 place-items-center rounded-2xl border border-white/10 bg-[#0f1a33] text-[#60a5fa]"
+              className="mx-auto grid h-14 w-14 place-items-center rounded-md border border-white/10 bg-[#0f1a33] text-[#60a5fa]"
               style={{ boxShadow: fieldShadow }}
             >
               <HiOutlineTag className="text-2xl" />
@@ -61,7 +61,7 @@ export default function ReferralPage() {
           </div>
 
           <div
-            className="mt-6 rounded-[24px] border border-white/10 bg-[#0f1a33] p-4 sm:p-5 text-center"
+            className="mt-6 rounded-[10px] border border-white/10 bg-[#0f1a33] p-4 sm:p-5 text-center"
             style={{ boxShadow: fieldShadow }}
           >
             <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-white/35">
@@ -69,7 +69,7 @@ export default function ReferralPage() {
             </p>
 
             <div
-              className="mt-3 rounded-2xl border border-white/10 bg-[#101d38] px-4 py-4"
+              className="mt-3 rounded-md border border-white/10 bg-[#101d38] px-4 py-4"
               style={{ boxShadow: fieldShadow }}
             >
               <span className="block text-xl font-semibold tracking-[0.22em] text-white">
@@ -80,7 +80,7 @@ export default function ReferralPage() {
             <button
               type="button"
               onClick={handleCopy}
-              className="mt-4 flex h-11 w-full items-center justify-center gap-2 rounded-2xl bg-[#3b82f6] text-sm font-semibold text-white transition hover:brightness-[1.03] active:translate-y-[1px]"
+              className="mt-4 flex h-11 w-full items-center justify-center gap-2 rounded-md bg-[#3b82f6] text-sm font-semibold text-white transition hover:brightness-[1.03] active:translate-y-[1px]"
               style={{ boxShadow: btnShadow }}
             >
               <HiOutlineClipboardCopy className="text-base" />

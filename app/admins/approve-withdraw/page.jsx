@@ -164,7 +164,7 @@ export default function ApproveWithdrawPage() {
         </div>
 
         <section
-          className="rounded-[24px] border border-white/10 bg-[#0a1428] p-3 sm:p-4"
+          className="rounded-[10px] border border-white/10 bg-[#0a1428] p-3 sm:p-4"
           style={{ boxShadow: shellShadow }}
         >
           <div className="mb-4">
@@ -176,14 +176,14 @@ export default function ApproveWithdrawPage() {
 
           {loading ? (
             <div
-              className="rounded-[20px] border border-white/10 bg-[#0f1a33] p-4 text-sm text-white/60"
+              className="rounded-[10px] border border-white/10 bg-[#0f1a33] p-4 text-sm text-white/60"
               style={{ boxShadow: cardShadow }}
             >
               Loading pending withdraw requests...
             </div>
           ) : withdrawRequests.length === 0 ? (
             <div
-              className="rounded-[20px] border border-white/10 bg-[#0f1a33] p-4 text-sm text-white/60"
+              className="rounded-[10px] border border-white/10 bg-[#0f1a33] p-4 text-sm text-white/60"
               style={{ boxShadow: cardShadow }}
             >
               No pending withdraw requests found.
@@ -198,7 +198,7 @@ export default function ApproveWithdrawPage() {
                 return (
                   <div
                     key={item.id}
-                    className="rounded-[20px] border border-white/10 bg-[#0f1a33] p-3"
+                    className="rounded-[10px] border border-white/10 bg-[#0f1a33] p-3"
                     style={{ boxShadow: cardShadow }}
                   >
                     <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
@@ -239,7 +239,7 @@ export default function ApproveWithdrawPage() {
                       <InfoBox
                         icon={<HiOutlineCreditCard className="text-[13px]" />}
                         label="Method"
-                        value={formatMethod(item.method)}
+                        value={item.methodLabel || formatMethod(item.method, item.operator)}
                         valueClass="text-[#60a5fa]"
                       />
 
@@ -256,7 +256,7 @@ export default function ApproveWithdrawPage() {
                         type="button"
                         onClick={() => handleAction(item.id, "accept")}
                         disabled={isBusy}
-                        className="flex h-10 items-center justify-center gap-1.5 rounded-2xl border border-white/10 bg-gradient-to-b from-[#22c55e] to-[#16a34a] text-[13px] font-semibold text-white transition hover:brightness-105 active:translate-y-[1px] disabled:cursor-not-allowed disabled:opacity-60"
+                        className="flex h-10 items-center justify-center gap-1.5 rounded-md border border-white/10 bg-gradient-to-b from-[#22c55e] to-[#16a34a] text-[13px] font-semibold text-white transition hover:brightness-105 active:translate-y-[1px] disabled:cursor-not-allowed disabled:opacity-60"
                         style={{
                           boxShadow:
                             "0 16px 32px rgba(34,197,94,.24), inset 1px 1px 0 rgba(255,255,255,.16), inset -1px -1px 0 rgba(0,0,0,.14)",
@@ -270,7 +270,7 @@ export default function ApproveWithdrawPage() {
                         type="button"
                         onClick={() => handleAction(item.id, "reject")}
                         disabled={isBusy}
-                        className="flex h-10 items-center justify-center gap-1.5 rounded-2xl border border-white/10 bg-gradient-to-b from-[#ef4444] to-[#dc2626] text-[13px] font-semibold text-white transition hover:brightness-105 active:translate-y-[1px] disabled:cursor-not-allowed disabled:opacity-60"
+                        className="flex h-10 items-center justify-center gap-1.5 rounded-md border border-white/10 bg-gradient-to-b from-[#ef4444] to-[#dc2626] text-[13px] font-semibold text-white transition hover:brightness-105 active:translate-y-[1px] disabled:cursor-not-allowed disabled:opacity-60"
                         style={{
                           boxShadow:
                             "0 16px 32px rgba(239,68,68,.24), inset 1px 1px 0 rgba(255,255,255,.16), inset -1px -1px 0 rgba(0,0,0,.14)",
@@ -314,7 +314,7 @@ function WithdrawPageAnimations() {
 function InfoBox({ icon, label, value, valueClass }) {
   return (
     <div
-      className="rounded-2xl border border-white/10 bg-[#101a31] px-3 py-2"
+      className="rounded-md border border-white/10 bg-[#101a31] px-3 py-2"
       style={{ boxShadow: cardShadow }}
     >
       <div className="mb-1 flex items-center gap-1.5 text-white/45">
@@ -331,7 +331,7 @@ function InfoBox({ icon, label, value, valueClass }) {
 function NumberInfoBox({ icon, label, value, onCopy }) {
   return (
     <div
-      className="rounded-2xl border border-white/10 bg-[#101a31] px-3 py-2"
+      className="rounded-md border border-white/10 bg-[#101a31] px-3 py-2"
       style={{ boxShadow: cardShadow }}
     >
       <div className="mb-1 flex items-center justify-between gap-2">
@@ -363,7 +363,7 @@ function NumberInfoBox({ icon, label, value, onCopy }) {
 function AmountInfoBox({ icon, label, amount, payableAmount, feePercent, onCopy }) {
   return (
     <div
-      className="rounded-2xl border border-white/10 bg-[#101a31] px-3 py-2"
+      className="rounded-md border border-white/10 bg-[#101a31] px-3 py-2"
       style={{ boxShadow: cardShadow }}
     >
       <div className="mb-1 flex items-center justify-between gap-2">
@@ -401,22 +401,38 @@ function AmountInfoBox({ icon, label, amount, payableAmount, feePercent, onCopy 
         </div>
 
         <p className="text-[11px] font-semibold leading-tight text-[#86efac]">
-          You get ৳{formatMoney(payableAmount)}
+          {feePercent > 0
+            ? `You get ৳${formatMoney(payableAmount)}`
+            : `Recharge ৳${formatMoney(payableAmount)}`}
         </p>
 
         <p className="text-[10px] leading-tight text-white/40">
-          Fee {feePercent}%
+          {feePercent > 0 ? `Fee ${feePercent}%` : "No fee"}
         </p>
       </div>
     </div>
   )
 }
 
-function formatMethod(value) {
+function formatMethod(value, operator = "") {
   const method = String(value || "").toLowerCase()
 
   if (method === "bkash") return "Bkash"
   if (method === "nagad") return "Nagad"
+  if (method === "recharge") {
+    const operatorLabelMap = {
+      grameenphone: "Grameenphone",
+      robi: "Robi",
+      airtel: "Airtel",
+      teletalk: "Teletalk",
+      banglalink: "Banglalink",
+    }
+
+    return operator
+      ? `Mobile Recharge • ${operatorLabelMap[operator] || operator}`
+      : "Mobile Recharge"
+  }
+
   return value || ""
 }
 

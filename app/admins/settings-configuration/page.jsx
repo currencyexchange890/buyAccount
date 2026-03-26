@@ -283,7 +283,7 @@ export default function SettingsConfigurationPage() {
         </div>
 
         <section
-          className="rounded-[28px] border border-white/10 bg-[#0a1428] p-4 sm:p-5"
+          className="rounded-[10px] border border-white/10 bg-[#0a1428] p-4 sm:p-5"
           style={{ boxShadow: cardShadow }}
         >
           <div className="mb-5">
@@ -418,7 +418,7 @@ export default function SettingsConfigurationPage() {
             <button
               type="submit"
               disabled={!canSave}
-              className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[#3b82f6] font-semibold text-white transition hover:brightness-[1.03] active:translate-y-[1px] disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex h-12 w-full items-center justify-center gap-2 rounded-md bg-[#3b82f6] font-semibold text-white transition hover:brightness-[1.03] active:translate-y-[1px] disabled:cursor-not-allowed disabled:opacity-50"
               style={{ boxShadow: btnShadow }}
             >
               <HiOutlineRefresh className="text-base" />
@@ -449,7 +449,7 @@ function FieldCard({
 }) {
   return (
     <div
-      className="rounded-[20px] border border-white/10 bg-[#0f1a33] p-2.5"
+      className="rounded-[10px] border border-white/10 bg-[#0f1a33] p-2.5"
       style={{ boxShadow: fieldShadow }}
     >
       <div className="mb-2 flex items-center justify-between gap-2">
@@ -475,7 +475,7 @@ function FieldCard({
       </div>
 
       <div
-        className="flex h-11 items-center gap-2 rounded-2xl border border-white/10 bg-[#101a31] px-3"
+        className="flex h-11 items-center gap-2 rounded-md border border-white/10 bg-[#101a31] px-3"
         style={{ boxShadow: fieldShadow }}
       >
         {icon}

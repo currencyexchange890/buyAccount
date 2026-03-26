@@ -251,7 +251,7 @@ export default function UserManagementPage() {
         </div>
 
         <section
-          className="rounded-[28px] border border-white/10 bg-[#0a1428] p-4 sm:p-5"
+          className="rounded-[10px] border border-white/10 bg-[#0a1428] p-4 sm:p-5"
           style={{ boxShadow: shellShadow }}
         >
           <div className="mb-5">
@@ -277,7 +277,7 @@ export default function UserManagementPage() {
 
           <div className="mb-5 grid grid-cols-1 gap-3 lg:grid-cols-4">
             <div
-              className="flex h-12 items-center gap-3 rounded-2xl border border-white/10 bg-[#0f1a33] px-4 lg:col-span-2"
+              className="flex h-12 items-center gap-3 rounded-md border border-white/10 bg-[#0f1a33] px-4 lg:col-span-2"
               style={{ boxShadow: cardShadow }}
             >
               <HiOutlineSearch className="shrink-0 text-[#60a5fa]" />
@@ -291,7 +291,7 @@ export default function UserManagementPage() {
             </div>
 
             <div
-              className="flex h-12 items-center gap-2 rounded-2xl border border-white/10 bg-[#0f1a33] px-4"
+              className="flex h-12 items-center gap-2 rounded-md border border-white/10 bg-[#0f1a33] px-4"
               style={{ boxShadow: cardShadow }}
             >
               <HiOutlineFilter className="shrink-0 text-[#60a5fa]" />
@@ -307,7 +307,7 @@ export default function UserManagementPage() {
             </div>
 
             <div
-              className="flex h-12 items-center gap-2 rounded-2xl border border-white/10 bg-[#0f1a33] px-4"
+              className="flex h-12 items-center gap-2 rounded-md border border-white/10 bg-[#0f1a33] px-4"
               style={{ boxShadow: cardShadow }}
             >
               <HiOutlineFilter className="shrink-0 text-[#60a5fa]" />
@@ -323,7 +323,7 @@ export default function UserManagementPage() {
             </div>
 
             <div
-              className="flex h-12 items-center gap-2 rounded-2xl border border-white/10 bg-[#0f1a33] px-4 lg:col-span-1"
+              className="flex h-12 items-center gap-2 rounded-md border border-white/10 bg-[#0f1a33] px-4 lg:col-span-1"
               style={{ boxShadow: cardShadow }}
             >
               <HiOutlineFilter className="shrink-0 text-[#60a5fa]" />
@@ -341,7 +341,7 @@ export default function UserManagementPage() {
 
           {loading ? (
             <div
-              className="rounded-[22px] border border-white/10 bg-[#0f1a33] p-5 text-center text-white/50"
+              className="rounded-[10px] border border-white/10 bg-[#0f1a33] p-5 text-center text-white/50"
               style={{ boxShadow: cardShadow }}
             >
               Loading users...
@@ -353,12 +353,12 @@ export default function UserManagementPage() {
                   key={user.id}
                   type="button"
                   onClick={() => openModal(user)}
-                  className="w-full rounded-[22px] border border-white/10 bg-[#0f1a33] p-3 text-left transition hover:brightness-[1.03]"
+                  className="w-full rounded-[10px] border border-white/10 bg-[#0f1a33] p-3 text-left transition hover:brightness-[1.03]"
                   style={{ boxShadow: cardShadow }}
                 >
                   <div className="flex items-center gap-3">
                     <div
-                      className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl border border-white/10 bg-[#101a31] text-[#60a5fa]"
+                      className="grid h-11 w-11 shrink-0 place-items-center rounded-md border border-white/10 bg-[#101a31] text-[#60a5fa]"
                       style={{ boxShadow: cardShadow }}
                     >
                       <HiOutlineUser className="text-[18px]" />
@@ -403,7 +403,7 @@ export default function UserManagementPage() {
 
               {!filteredUsers.length && (
                 <div
-                  className="rounded-[22px] border border-white/10 bg-[#0f1a33] p-5 text-center text-white/50"
+                  className="rounded-[10px] border border-white/10 bg-[#0f1a33] p-5 text-center text-white/50"
                   style={{ boxShadow: cardShadow }}
                 >
                   No users found
@@ -445,7 +445,7 @@ function StatCard({ label, value, highlight = "white" }) {
 
   return (
     <div
-      className="rounded-[20px] border border-white/10 bg-[#0f1a33] px-3 py-3"
+      className="rounded-[10px] border border-white/10 bg-[#0f1a33] px-3 py-3"
       style={{ boxShadow: cardShadow }}
     >
       <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-white/40">
@@ -477,7 +477,7 @@ function UserDetailsModal({
       <div className="absolute inset-0 bg-black/75 backdrop-blur-sm" onClick={onClose} />
 
       <div
-        className="relative w-full max-w-[380px] rounded-[24px] border border-white/10 bg-[#0a1428] p-4"
+        className="relative w-full max-w-[380px] rounded-[10px] border border-white/10 bg-[#0a1428] p-4"
         style={{ boxShadow: "0 30px 120px rgba(0,0,0,.72)" }}
       >
         <div className="mb-3 flex items-start justify-between gap-3">
@@ -493,7 +493,7 @@ function UserDetailsModal({
             type="button"
             onClick={editing ? onSave : () => setEditing(true)}
             disabled={saving}
-            className="flex h-9 items-center gap-2 rounded-xl bg-[#3b82f6] px-3 text-[12px] font-semibold text-white disabled:opacity-60"
+            className="flex h-9 items-center gap-2 rounded-md bg-[#3b82f6] px-3 text-[12px] font-semibold text-white disabled:opacity-60"
             style={{ boxShadow: btnShadow }}
           >
             {editing ? <HiOutlineCheck className="text-sm" /> : <HiOutlinePencil className="text-sm" />}
@@ -503,7 +503,7 @@ function UserDetailsModal({
 
         <div className="grid grid-cols-2 gap-2">
           <div
-            className="rounded-2xl border border-white/10 bg-[#101a31] px-3 py-2.5"
+            className="rounded-md border border-white/10 bg-[#101a31] px-3 py-2.5"
             style={{ boxShadow: cardShadow }}
           >
             <p className="text-[10px] uppercase tracking-[0.12em] text-white/40">
@@ -514,7 +514,7 @@ function UserDetailsModal({
               type="button"
               disabled={!editing}
               onClick={() => editing && setShowStatusOptions((prev) => !prev)}
-              className={`mt-1 w-full rounded-xl text-left font-semibold ${
+              className={`mt-1 w-full rounded-md text-left font-semibold ${
                 editedStatus === "active" ? "text-[#4ade80]" : "text-[#f87171]"
               } ${editing ? "cursor-pointer" : "cursor-default"}`}
             >
@@ -529,7 +529,7 @@ function UserDetailsModal({
                     setEditedStatus("active")
                     setShowStatusOptions(false)
                   }}
-                  className="rounded-xl bg-[#12331f] px-2 py-1.5 text-[12px] font-semibold text-[#4ade80]"
+                  className="rounded-md bg-[#12331f] px-2 py-1.5 text-[12px] font-semibold text-[#4ade80]"
                 >
                   active
                 </button>
@@ -540,7 +540,7 @@ function UserDetailsModal({
                     setEditedStatus("inactive")
                     setShowStatusOptions(false)
                   }}
-                  className="rounded-xl bg-[#2a1a1a] px-2 py-1.5 text-[12px] font-semibold text-[#f87171]"
+                  className="rounded-md bg-[#2a1a1a] px-2 py-1.5 text-[12px] font-semibold text-[#f87171]"
                 >
                   inactive
                 </button>
@@ -549,7 +549,7 @@ function UserDetailsModal({
           </div>
 
           <div
-            className="rounded-2xl border border-white/10 bg-[#101a31] px-3 py-2.5"
+            className="rounded-md border border-white/10 bg-[#101a31] px-3 py-2.5"
             style={{ boxShadow: cardShadow }}
           >
             <p className="text-[10px] uppercase tracking-[0.12em] text-white/40">
@@ -581,7 +581,7 @@ function UserDetailsModal({
           <button
             type="button"
             onClick={onClose}
-            className="h-10 w-full rounded-2xl border border-white/10 bg-[#101a31] text-sm font-semibold text-white/85"
+            className="h-10 w-full rounded-md border border-white/10 bg-[#101a31] text-sm font-semibold text-white/85"
             style={{ boxShadow: cardShadow }}
           >
             Close
@@ -595,7 +595,7 @@ function UserDetailsModal({
 function MiniBox({ label, value }) {
   return (
     <div
-      className="rounded-2xl border border-white/10 bg-[#101a31] px-3 py-2.5"
+      className="rounded-md border border-white/10 bg-[#101a31] px-3 py-2.5"
       style={{ boxShadow: cardShadow }}
     >
       <p className="text-[10px] uppercase tracking-[0.12em] text-white/40">{label}</p>

@@ -101,7 +101,7 @@ export default function StorePage() {
         </div>
 
         <section
-          className="rounded-[24px] border border-white/10 bg-[#0a1428] p-3 sm:p-4"
+          className="rounded-[10px] border border-white/10 bg-[#0a1428] p-3 sm:p-4"
           style={{ boxShadow: shellShadow }}
         >
           <div className="mb-4">
@@ -113,14 +113,14 @@ export default function StorePage() {
 
           {loading ? (
             <div
-              className="rounded-[20px] border border-white/10 bg-[#0f1a33] p-4 text-sm text-white/60"
+              className="rounded-[10px] border border-white/10 bg-[#0f1a33] p-4 text-sm text-white/60"
               style={{ boxShadow: cardShadow }}
             >
               Loading store resources...
             </div>
           ) : resources.length === 0 ? (
             <div
-              className="rounded-[20px] border border-white/10 bg-[#0f1a33] p-4 text-sm text-white/60"
+              className="rounded-[10px] border border-white/10 bg-[#0f1a33] p-4 text-sm text-white/60"
               style={{ boxShadow: cardShadow }}
             >
               No resources found.
@@ -130,11 +130,11 @@ export default function StorePage() {
               {resources.map((item) => (
                 <div
                   key={item.id}
-                  className="rounded-[20px] border border-white/10 bg-[#0f1a33] p-2.5"
+                  className="rounded-[10px] border border-white/10 bg-[#0f1a33] p-2.5"
                   style={{ boxShadow: cardShadow }}
                 >
                   <div
-                    className="aspect-square overflow-hidden rounded-[14px] border border-white/10 bg-[#101d38]"
+                    className="aspect-square overflow-hidden rounded-[10px] border border-white/10 bg-[#101d38]"
                     style={{ boxShadow: cardShadow }}
                   >
                     <img
@@ -151,7 +151,7 @@ export default function StorePage() {
                   </div>
 
                   <div
-                    className="mt-2 rounded-[11px] border border-white/10 bg-[#101a31] px-2 py-1.5"
+                    className="mt-2 rounded-[10px] border border-white/10 bg-[#101a31] px-2 py-1.5"
                     style={{ boxShadow: cardShadow }}
                   >
                     <p className="text-[8px] font-medium uppercase leading-tight tracking-[0.04em] text-white/42 sm:text-[9px]">
@@ -165,7 +165,7 @@ export default function StorePage() {
                   <button
                     type="button"
                     onClick={() => openModal(item)}
-                    className="mt-2 h-9 w-full rounded-[12px] border border-white/10 bg-gradient-to-b from-[#3c84ff] to-[#2b6de5] text-[12px] font-semibold tracking-[0.03em] text-white transition hover:brightness-105 active:translate-y-[1px] sm:text-[13px]"
+                    className="mt-2 h-9 w-full rounded-[10px] border border-white/10 bg-gradient-to-b from-[#3c84ff] to-[#2b6de5] text-[12px] font-semibold tracking-[0.03em] text-white transition hover:brightness-105 active:translate-y-[1px] sm:text-[13px]"
                     style={{ boxShadow: blueBtnShadow }}
                   >
                     Sell
@@ -190,11 +190,11 @@ function SellModal({ item, onClose, onSell }) {
       <div className="absolute inset-0 bg-black/75 backdrop-blur-sm" onClick={onClose} />
 
       <div
-        className="relative w-full max-w-[320px] rounded-[24px] border border-white/10 bg-[#0a1428] p-3"
+        className="relative w-full max-w-[320px] rounded-[10px] border border-white/10 bg-[#0a1428] p-3"
         style={{ boxShadow: "0 30px 120px rgba(0,0,0,.72)" }}
       >
         <div
-          className="aspect-square overflow-hidden rounded-[14px] border border-white/10 bg-[#101d38] p-2"
+          className="aspect-square overflow-hidden rounded-[10px] border border-white/10 bg-[#101d38] p-2"
           style={{ boxShadow: cardShadow }}
         >
           <img
@@ -204,7 +204,7 @@ function SellModal({ item, onClose, onSell }) {
           />
         </div>
 
-        <div className="mt-3 rounded-xl border border-white/10 bg-[#0f1a33] p-3" style={{ boxShadow: cardShadow }}>
+        <div className="mt-3 rounded-md border border-white/10 bg-[#0f1a33] p-3" style={{ boxShadow: cardShadow }}>
           <p className="truncate text-center text-sm font-semibold text-white">
             {item.name}
           </p>
@@ -217,7 +217,7 @@ function SellModal({ item, onClose, onSell }) {
           <button
             type="button"
             onClick={onClose}
-            className="h-9 rounded-xl border border-white/10 bg-[#101d38] text-[12px] font-semibold text-white/85 transition hover:text-white sm:text-sm"
+            className="h-9 rounded-md border border-white/10 bg-[#101d38] text-[12px] font-semibold text-white/85 transition hover:text-white sm:text-sm"
             style={{ boxShadow: cardShadow }}
           >
             Cancel
@@ -226,7 +226,7 @@ function SellModal({ item, onClose, onSell }) {
           <button
             type="button"
             onClick={onSell}
-            className="h-9 rounded-xl border border-white/10 bg-gradient-to-b from-[#3c84ff] to-[#2b6de5] text-[12px] font-semibold text-white transition hover:brightness-[1.03] active:translate-y-[1px] sm:text-sm"
+            className="h-9 rounded-md border border-white/10 bg-gradient-to-b from-[#3c84ff] to-[#2b6de5] text-[12px] font-semibold text-white transition hover:brightness-[1.03] active:translate-y-[1px] sm:text-sm"
             style={{ boxShadow: blueBtnShadow }}
           >
             Sell Now

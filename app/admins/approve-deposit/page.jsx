@@ -142,7 +142,7 @@ export default function ApproveDepositPage() {
         </div>
 
         <section
-          className="rounded-[28px] border border-white/10 bg-[#0a1428] p-4 sm:p-5"
+          className="rounded-[10px] border border-white/10 bg-[#0a1428] p-4 sm:p-5"
           style={{ boxShadow: cardShadow }}
         >
           <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
@@ -155,7 +155,7 @@ export default function ApproveDepositPage() {
 
             <div className="grid grid-cols-2 gap-3 md:w-[320px]">
               <div
-                className="rounded-[18px] border border-white/10 bg-[#0f1a33] px-4 py-3"
+                className="rounded-[10px] border border-white/10 bg-[#0f1a33] px-4 py-3"
                 style={{ boxShadow: fieldShadow }}
               >
                 <p className="text-[11px] uppercase tracking-[0.14em] text-white/40">
@@ -165,7 +165,7 @@ export default function ApproveDepositPage() {
               </div>
 
               <div
-                className="rounded-[18px] border border-white/10 bg-[#0f1a33] px-4 py-3"
+                className="rounded-[10px] border border-white/10 bg-[#0f1a33] px-4 py-3"
                 style={{ boxShadow: fieldShadow }}
               >
                 <p className="text-[11px] uppercase tracking-[0.14em] text-white/40">
@@ -180,14 +180,14 @@ export default function ApproveDepositPage() {
 
           {loading ? (
             <div
-              className="rounded-[20px] border border-white/10 bg-[#0f1a33] p-4 text-sm text-white/60"
+              className="rounded-[10px] border border-white/10 bg-[#0f1a33] p-4 text-sm text-white/60"
               style={{ boxShadow: fieldShadow }}
             >
               Loading pending deposits...
             </div>
           ) : deposits.length === 0 ? (
             <div
-              className="rounded-[20px] border border-white/10 bg-[#0f1a33] p-4 text-sm text-white/60"
+              className="rounded-[10px] border border-white/10 bg-[#0f1a33] p-4 text-sm text-white/60"
               style={{ boxShadow: fieldShadow }}
             >
               No pending deposit requests found.
@@ -202,7 +202,7 @@ export default function ApproveDepositPage() {
                 return (
                   <div
                     key={item.id}
-                    className="rounded-[20px] border border-white/10 bg-[#0f1a33] p-3"
+                    className="rounded-[10px] border border-white/10 bg-[#0f1a33] p-3"
                     style={{ boxShadow: cardShadow }}
                   >
                     <div className="mb-2 flex items-center justify-between gap-2">
@@ -255,7 +255,7 @@ export default function ApproveDepositPage() {
                         type="button"
                         onClick={() => handleAction(item.id, "accept")}
                         disabled={isBusy}
-                        className="flex h-10 items-center justify-center gap-2 rounded-2xl border border-white/10 bg-gradient-to-b from-[#22c55e] to-[#16a34a] text-sm font-semibold text-white transition hover:brightness-105 active:translate-y-[1px] disabled:cursor-not-allowed disabled:opacity-60"
+                        className="flex h-10 items-center justify-center gap-2 rounded-md border border-white/10 bg-gradient-to-b from-[#22c55e] to-[#16a34a] text-sm font-semibold text-white transition hover:brightness-105 active:translate-y-[1px] disabled:cursor-not-allowed disabled:opacity-60"
                         style={{
                           boxShadow:
                             "0 16px 32px rgba(34,197,94,.24), inset 1px 1px 0 rgba(255,255,255,.16), inset -1px -1px 0 rgba(0,0,0,.14)",
@@ -269,7 +269,7 @@ export default function ApproveDepositPage() {
                         type="button"
                         onClick={() => handleAction(item.id, "reject")}
                         disabled={isBusy}
-                        className="flex h-10 items-center justify-center gap-2 rounded-2xl border border-white/10 bg-gradient-to-b from-[#ef4444] to-[#dc2626] text-sm font-semibold text-white transition hover:brightness-105 active:translate-y-[1px] disabled:cursor-not-allowed disabled:opacity-60"
+                        className="flex h-10 items-center justify-center gap-2 rounded-md border border-white/10 bg-gradient-to-b from-[#ef4444] to-[#dc2626] text-sm font-semibold text-white transition hover:brightness-105 active:translate-y-[1px] disabled:cursor-not-allowed disabled:opacity-60"
                         style={{
                           boxShadow:
                             "0 16px 32px rgba(239,68,68,.24), inset 1px 1px 0 rgba(255,255,255,.16), inset -1px -1px 0 rgba(0,0,0,.14)",
@@ -293,7 +293,7 @@ export default function ApproveDepositPage() {
 function InfoCard({ icon, label, value, valueClassName = "text-white" }) {
   return (
     <div
-      className="rounded-[16px] border border-white/10 bg-[#101a31] px-3 py-2.5"
+      className="rounded-[10px] border border-white/10 bg-[#101a31] px-3 py-2.5"
       style={{ boxShadow: fieldShadow }}
     >
       <div className="mb-1 flex items-center gap-1.5 text-white/45">
@@ -316,7 +316,7 @@ function StatusPill({ status }) {
       : "border-[#60a5fa]/25 bg-[#3b82f6]/10 text-[#93c5fd]"
 
   return (
-    <span className={`rounded-xl border px-2.5 py-1 text-[10px] font-semibold ${cls}`}>
+    <span className={`rounded-md border px-2.5 py-1 text-[10px] font-semibold ${cls}`}>
       {capitalize(normalized)}
     </span>
   )

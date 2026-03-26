@@ -69,10 +69,31 @@ function getWithdrawFeePercent(config) {
   return Number.isFinite(percent) && percent >= 0 ? percent : 0
 }
 
+function getMethodSummary(method, operator) {
+  if (method === "bkash") return "bKash"
+  if (method === "nagad") return "Nagad"
+  if (method === "recharge") {
+    const operatorLabelMap = {
+      grameenphone: "Grameenphone",
+      robi: "Robi",
+      airtel: "Airtel",
+      teletalk: "Teletalk",
+      banglalink: "Banglalink",
+    }
+
+    return operator
+      ? `Mobile Recharge • ${operatorLabelMap[operator] || operator}`
+      : "Mobile Recharge"
+  }
+
+  return method || "Unknown"
+}
+
 function mapWithdraw(item, feePercent) {
   const user = item.userId || {}
   const amount = Number(item.amount || 0)
-  const feeAmount = normalizeMoney((amount * feePercent) / 100)
+  const effectiveFeePercent = item.method === "recharge" ? 0 : feePercent
+  const feeAmount = normalizeMoney((amount * effectiveFeePercent) / 100)
   const payableAmount = normalizeMoney(Math.max(amount - feeAmount, 0))
 
   return {
@@ -82,9 +103,11 @@ function mapWithdraw(item, feePercent) {
     method: item.method || "",
     number: item.number || "",
     status: item.status || "pending",
-    feePercent,
+    feePercent: effectiveFeePercent,
     feeAmount,
     payableAmount,
+    operator: item.operator || "",
+    methodLabel: getMethodSummary(item.method, item.operator || ""),
   }
 }
 
@@ -210,9 +233,13 @@ export async function PATCH(req) {
         userId: user._id,
         amount,
         type: "refund",
-        note: `Your withdraw request of BDT ${formatMoney(
-          amount
-        )} has been rejected and refunded to your withdraw balance.`,
+        note: withdraw.method === "recharge"
+        ? `Your mobile recharge request of BDT ${formatMoney(
+            amount
+          )} has been rejected and refunded to your withdraw balance.`
+        : `Your withdraw request of BDT ${formatMoney(
+            amount
+          )} has been rejected and refunded to your withdraw balance.`,
       })
 
       return NextResponse.json(
@@ -234,9 +261,13 @@ export async function PATCH(req) {
       userId: user._id,
       amount,
       type: "withdraw",
-      note: `Your withdraw request of BDT ${formatMoney(
-        amount
-      )} has been completed successfully.`,
+      note: withdraw.method === "recharge"
+        ? `Your mobile recharge request of BDT ${formatMoney(
+            amount
+          )} has been completed successfully.`
+        : `Your withdraw request of BDT ${formatMoney(
+            amount
+          )} has been completed successfully.`,
     })
 
     return NextResponse.json(

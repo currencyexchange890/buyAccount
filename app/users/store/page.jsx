@@ -167,7 +167,7 @@ export default function StorePage() {
         </div>
 
         <section
-          className="rounded-[24px] border border-white/10 bg-[#0a1428] p-3 sm:p-4"
+          className="rounded-[10px] border border-white/10 bg-[#0a1428] p-3 sm:p-4"
           style={{ boxShadow: shellShadow }}
         >
           <div className="mb-4">
@@ -179,14 +179,14 @@ export default function StorePage() {
 
           {loading ? (
             <div
-              className="rounded-[20px] border border-white/10 bg-[#0f1a33] p-4 text-sm text-white/60"
+              className="rounded-[10px] border border-white/10 bg-[#0f1a33] p-4 text-sm text-white/60"
               style={{ boxShadow: cardShadow }}
             >
               Loading store resources...
             </div>
           ) : resources.length === 0 ? (
             <div
-              className="rounded-[20px] border border-white/10 bg-[#0f1a33] p-4 text-sm text-white/60"
+              className="rounded-[10px] border border-white/10 bg-[#0f1a33] p-4 text-sm text-white/60"
               style={{ boxShadow: cardShadow }}
             >
               No resources found.
@@ -196,11 +196,11 @@ export default function StorePage() {
               {resources.map((item) => (
                 <div
                   key={item.name}
-                  className="rounded-[20px] border border-white/10 bg-[#0f1a33] p-2.5"
+                  className="rounded-[10px] border border-white/10 bg-[#0f1a33] p-2.5"
                   style={{ boxShadow: cardShadow }}
                 >
                   <div
-                    className="aspect-square overflow-hidden rounded-[14px] border border-white/10 bg-[#101d38]"
+                    className="aspect-square overflow-hidden rounded-[10px] border border-white/10 bg-[#101d38]"
                     style={{ boxShadow: cardShadow }}
                   >
                     <img
@@ -218,7 +218,7 @@ export default function StorePage() {
 
                   <div className="mt-2 grid grid-cols-2 gap-2">
                     <div
-                      className="rounded-[11px] border border-white/10 bg-[#101a31] px-2 py-1.5"
+                      className="rounded-[10px] border border-white/10 bg-[#101a31] px-2 py-1.5"
                       style={{ boxShadow: cardShadow }}
                     >
                       <p className="text-[8px] font-medium uppercase leading-tight tracking-[0.04em] text-white/42 sm:text-[9px]">
@@ -230,7 +230,7 @@ export default function StorePage() {
                     </div>
 
                     <div
-                      className="rounded-[11px] border border-white/10 bg-[#101a31] px-2 py-1.5"
+                      className="rounded-[10px] border border-white/10 bg-[#101a31] px-2 py-1.5"
                       style={{ boxShadow: cardShadow }}
                     >
                       <p className="text-[8px] font-medium uppercase leading-tight tracking-[0.04em] text-white/42 sm:text-[9px]">
@@ -246,7 +246,7 @@ export default function StorePage() {
                     type="button"
                     onClick={() => openModal(item)}
                     disabled={Number(item.stock || 0) <= 0}
-                    className={`mt-2 h-9 w-full rounded-[12px] border border-white/10 text-[12px] font-semibold tracking-[0.03em] text-white transition sm:text-[13px] ${
+                    className={`mt-2 h-9 w-full rounded-[10px] border border-white/10 text-[12px] font-semibold tracking-[0.03em] text-white transition sm:text-[13px] ${
                       Number(item.stock || 0) > 0
                         ? "bg-gradient-to-b from-[#3c84ff] to-[#2b6de5] hover:brightness-105 active:translate-y-[1px]"
                         : "cursor-not-allowed bg-[#101d38] text-white/35"
@@ -286,11 +286,11 @@ function SellModal({ item, selling, onClose, onSell }) {
       <div className="absolute inset-0 bg-black/75 backdrop-blur-sm" onClick={onClose} />
 
       <div
-        className="relative w-full max-w-[320px] rounded-[24px] border border-white/10 bg-[#0a1428] p-3"
+        className="relative w-full max-w-[320px] rounded-[10px] border border-white/10 bg-[#0a1428] p-3"
         style={{ boxShadow: "0 30px 120px rgba(0,0,0,.72)" }}
       >
         <div
-          className="aspect-square overflow-hidden rounded-[14px] border border-white/10 bg-[#101d38] p-2"
+          className="aspect-square overflow-hidden rounded-[10px] border border-white/10 bg-[#101d38] p-2"
           style={{ boxShadow: cardShadow }}
         >
           <img
@@ -307,7 +307,7 @@ function SellModal({ item, selling, onClose, onSell }) {
         </div>
 
         <div
-          className="mt-3 rounded-xl border border-white/10 bg-[#0f1a33] p-3 text-center"
+          className="mt-3 rounded-md border border-white/10 bg-[#0f1a33] p-3 text-center"
           style={{ boxShadow: cardShadow }}
         >
           <p className="text-[11px] text-white/45">Available Stock</p>
@@ -319,7 +319,7 @@ function SellModal({ item, selling, onClose, onSell }) {
             type="button"
             onClick={onClose}
             disabled={selling}
-            className="h-9 rounded-xl border border-white/10 bg-[#101d38] text-[12px] font-semibold text-white/85 transition hover:text-white disabled:cursor-not-allowed disabled:opacity-60 sm:text-sm"
+            className="h-9 rounded-md border border-white/10 bg-[#101d38] text-[12px] font-semibold text-white/85 transition hover:text-white disabled:cursor-not-allowed disabled:opacity-60 sm:text-sm"
             style={{ boxShadow: cardShadow }}
           >
             Cancel
@@ -329,7 +329,7 @@ function SellModal({ item, selling, onClose, onSell }) {
             type="button"
             onClick={onSell}
             disabled={selling || Number(item.stock || 0) <= 0}
-            className="h-9 rounded-xl border border-white/10 bg-gradient-to-b from-[#3c84ff] to-[#2b6de5] text-[12px] font-semibold text-white transition hover:brightness-[1.03] active:translate-y-[1px] disabled:cursor-not-allowed disabled:opacity-60 sm:text-sm"
+            className="h-9 rounded-md border border-white/10 bg-gradient-to-b from-[#3c84ff] to-[#2b6de5] text-[12px] font-semibold text-white transition hover:brightness-[1.03] active:translate-y-[1px] disabled:cursor-not-allowed disabled:opacity-60 sm:text-sm"
             style={{ boxShadow: blueBtnShadow }}
           >
             {selling ? "Selling..." : "Sell All"}
@@ -343,7 +343,7 @@ function SellModal({ item, selling, onClose, onSell }) {
 function StatBox({ label, value, valueClassName = "text-white" }) {
   return (
     <div
-      className="rounded-xl border border-white/10 bg-[#0f1a33] px-2 py-2"
+      className="rounded-md border border-white/10 bg-[#0f1a33] px-2 py-2"
       style={{ boxShadow: cardShadow }}
     >
       <p className="truncate text-[8px] leading-tight text-white/45 sm:text-[9px]">

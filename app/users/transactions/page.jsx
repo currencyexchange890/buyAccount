@@ -89,7 +89,7 @@ export default function TransactionsPage() {
         </div>
 
         <section
-          className="rounded-[28px] border border-white/10 bg-[#0a1428] p-6 sm:p-7"
+          className="rounded-[10px] border border-white/10 bg-[#0a1428] p-6 sm:p-7"
           style={{ boxShadow: formShadow }}
         >
           <div className="flex items-center justify-between">
@@ -104,14 +104,14 @@ export default function TransactionsPage() {
           <div className="mt-4 space-y-3">
             {loading ? (
               <div
-                className="rounded-2xl border border-white/10 bg-[#0f1a33] p-4 text-sm text-white/55"
+                className="rounded-md border border-white/10 bg-[#0f1a33] p-4 text-sm text-white/55"
                 style={{ boxShadow: fieldShadow }}
               >
                 Loading transactions...
               </div>
             ) : items.length === 0 ? (
               <div
-                className="rounded-2xl border border-white/10 bg-[#0f1a33] p-4 text-sm text-white/55"
+                className="rounded-md border border-white/10 bg-[#0f1a33] p-4 text-sm text-white/55"
                 style={{ boxShadow: fieldShadow }}
               >
                 No transactions found.
@@ -120,7 +120,7 @@ export default function TransactionsPage() {
               items.map((item) => (
                 <div
                   key={item.id}
-                  className="rounded-2xl border border-white/10 bg-[#0f1a33] p-4"
+                  className="rounded-md border border-white/10 bg-[#0f1a33] p-4"
                   style={{ boxShadow: fieldShadow }}
                 >
                   <div className="flex items-start justify-between gap-3">

@@ -215,7 +215,7 @@ export default function SupportSetupPage() {
         </div>
 
         <section
-          className="rounded-[28px] border border-white/10 bg-[#0a1428] p-4 sm:p-5"
+          className="rounded-[10px] border border-white/10 bg-[#0a1428] p-4 sm:p-5"
           style={{ boxShadow: cardShadow }}
         >
           <div className="mb-5">
@@ -233,7 +233,7 @@ export default function SupportSetupPage() {
                 Forgot Password Number
               </label>
               <div
-                className="flex h-12 items-center gap-3 rounded-2xl border border-white/10 bg-[#0f1a33] px-4"
+                className="flex h-12 items-center gap-3 rounded-md border border-white/10 bg-[#0f1a33] px-4"
                 style={{ boxShadow: fieldShadow }}
               >
                 <HiOutlinePhone className="shrink-0 text-[#60a5fa]" />
@@ -276,7 +276,7 @@ export default function SupportSetupPage() {
                 Telegram Group Link
               </label>
               <div
-                className="flex h-12 items-center gap-3 rounded-2xl border border-white/10 bg-[#0f1a33] px-4"
+                className="flex h-12 items-center gap-3 rounded-md border border-white/10 bg-[#0f1a33] px-4"
                 style={{ boxShadow: fieldShadow }}
               >
                 <HiOutlineChatAlt2 className="shrink-0 text-[#60a5fa]" />
@@ -306,7 +306,7 @@ export default function SupportSetupPage() {
                 Customer Care Link
               </label>
               <div
-                className="flex h-12 items-center gap-3 rounded-2xl border border-white/10 bg-[#0f1a33] px-4"
+                className="flex h-12 items-center gap-3 rounded-md border border-white/10 bg-[#0f1a33] px-4"
                 style={{ boxShadow: fieldShadow }}
               >
                 <HiOutlineLink className="shrink-0 text-[#60a5fa]" />
@@ -334,7 +334,7 @@ export default function SupportSetupPage() {
             <button
               type="submit"
               disabled={!canSave}
-              className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[#3b82f6] font-semibold text-white transition hover:brightness-[1.03] active:translate-y-[1px] disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex h-12 w-full items-center justify-center gap-2 rounded-md bg-[#3b82f6] font-semibold text-white transition hover:brightness-[1.03] active:translate-y-[1px] disabled:cursor-not-allowed disabled:opacity-50"
               style={{ boxShadow: btnShadow }}
             >
               <HiOutlineRefresh className="text-base" />
