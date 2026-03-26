@@ -62,6 +62,20 @@ async function getOrCreateResourceConfig() {
   return config
 }
 
+function sortResourcesByPrice(items) {
+  return [...items].sort((a, b) => {
+    const priceDiff = Number(a?.price || 0) - Number(b?.price || 0)
+
+    if (priceDiff !== 0) {
+      return priceDiff
+    }
+
+    return String(a?.name || a?.fileName || "").localeCompare(
+      String(b?.name || b?.fileName || "")
+    )
+  })
+}
+
 function buildResourceMap(resourceConfig) {
   return new Map(
     resourceConfig.resources.map((item) => [
@@ -76,7 +90,7 @@ function buildResourceMap(resourceConfig) {
 }
 
 function mapResourceOptions(resourceConfig) {
-  return resourceConfig.resources.map((item, index) => ({
+  return sortResourcesByPrice(resourceConfig.resources).map((item, index) => ({
     id: index + 1,
     name: item.name,
     fileName: item.fileName,
@@ -85,7 +99,23 @@ function mapResourceOptions(resourceConfig) {
   }))
 }
 
-function mapPackages(packages) {
+function sortPackageResources(resources, resourceMap) {
+  return [...resources].sort((a, b) => {
+    const aPrice = Number(resourceMap.get(a.fileName)?.price || 0)
+    const bPrice = Number(resourceMap.get(b.fileName)?.price || 0)
+    const priceDiff = aPrice - bPrice
+
+    if (priceDiff !== 0) {
+      return priceDiff
+    }
+
+    return String(a.resourceName || a.fileName || "").localeCompare(
+      String(b.resourceName || b.fileName || "")
+    )
+  })
+}
+
+function mapPackages(packages, resourceMap) {
   return [...packages]
     .sort(
       (a, b) =>
@@ -98,7 +128,7 @@ function mapPackages(packages) {
       validityHours: String(item.validityHours),
       minResourceValue: Number(item.minResourceValue || 0),
       maxResourceValue: Number(item.maxResourceValue || 0),
-      packageResources: item.packageResources.map((resource, index) => ({
+      packageResources: sortPackageResources(item.packageResources, resourceMap).map((resource, index) => ({
         rowId: `${item._id.toString()}-${index + 1}`,
         resourceName: resource.resourceName,
         fileName: resource.fileName,
@@ -175,7 +205,7 @@ function validatePackageBody(body, resourceMap) {
       packageName,
       price,
       validityHours,
-      packageResources: normalizedResources,
+      packageResources: sortPackageResources(normalizedResources, resourceMap),
       minResourceValue,
       maxResourceValue,
     },
@@ -198,12 +228,13 @@ export async function GET(req) {
     await connectDB()
 
     const resourceConfig = await getOrCreateResourceConfig()
+    const resourceMap = buildResourceMap(resourceConfig)
     const packages = await PriceList.find({}).lean()
 
     return NextResponse.json(
       {
         resourceOptions: mapResourceOptions(resourceConfig),
-        packages: mapPackages(packages),
+        packages: mapPackages(packages, resourceMap),
       },
       { status: 200 }
     )
@@ -255,7 +286,7 @@ export async function POST(req) {
     return NextResponse.json(
       {
         message: "Package created successfully",
-        packages: mapPackages(packages),
+        packages: mapPackages(packages, resourceMap),
       },
       { status: 201 }
     )
@@ -320,7 +351,7 @@ export async function PUT(req) {
     return NextResponse.json(
       {
         message: "Package updated successfully",
-        packages: mapPackages(packages),
+        packages: mapPackages(packages, resourceMap),
       },
       { status: 200 }
     )
@@ -351,6 +382,9 @@ export async function DELETE(req) {
 
     await connectDB()
 
+    const resourceConfig = await getOrCreateResourceConfig()
+    const resourceMap = buildResourceMap(resourceConfig)
+
     const deleted = await PriceList.findByIdAndDelete(id)
 
     if (!deleted) {
@@ -362,7 +396,7 @@ export async function DELETE(req) {
     return NextResponse.json(
       {
         message: "Package deleted successfully",
-        packages: mapPackages(packages),
+        packages: mapPackages(packages, resourceMap),
       },
       { status: 200 }
     )

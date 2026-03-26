@@ -50,6 +50,43 @@ function makeEmptyResourceRow() {
   }
 }
 
+function sortResourcesByPrice(items) {
+  return [...(Array.isArray(items) ? items : [])].sort((a, b) => {
+    const priceDiff = Number(a?.price || 0) - Number(b?.price || 0)
+
+    if (priceDiff !== 0) {
+      return priceDiff
+    }
+
+    return String(a?.name || a?.fileName || "").localeCompare(
+      String(b?.name || b?.fileName || "")
+    )
+  })
+}
+
+function normalizePackages(items, priceMap) {
+  return (Array.isArray(items) ? items : []).map((item) => ({
+    ...item,
+    packageResources: sortPackageResources(item?.packageResources, priceMap),
+  }))
+}
+
+function sortPackageResources(items, priceMap) {
+  return [...(Array.isArray(items) ? items : [])].sort((a, b) => {
+    const aPrice = Number(priceMap?.get(a?.fileName)?.price || 0)
+    const bPrice = Number(priceMap?.get(b?.fileName)?.price || 0)
+    const priceDiff = aPrice - bPrice
+
+    if (priceDiff !== 0) {
+      return priceDiff
+    }
+
+    return String(a?.resourceName || a?.fileName || "").localeCompare(
+      String(b?.resourceName || b?.fileName || "")
+    )
+  })
+}
+
 export default function PriceListPage() {
   const router = useRouter()
 
@@ -74,9 +111,11 @@ export default function PriceListPage() {
     )
   }, [packages])
 
+  const sortedResourceOptions = useMemo(() => sortResourcesByPrice(resourceOptions), [resourceOptions])
+
   const priceMap = useMemo(() => {
     return new Map(
-      resourceOptions.map((item) => [
+      sortedResourceOptions.map((item) => [
         item.fileName,
         {
           name: item.name,
@@ -86,7 +125,7 @@ export default function PriceListPage() {
         },
       ])
     )
-  }, [resourceOptions])
+  }, [sortedResourceOptions])
 
   const packageValueSummary = useMemo(() => {
     let minTotal = 0
@@ -136,8 +175,13 @@ export default function PriceListPage() {
           return
         }
 
-        setResourceOptions(data?.resourceOptions || [])
-        setPackages(data?.packages || [])
+        const nextResourceOptions = sortResourcesByPrice(data?.resourceOptions || [])
+        const nextPriceMap = new Map(
+          nextResourceOptions.map((item) => [item.fileName, item])
+        )
+
+        setResourceOptions(nextResourceOptions)
+        setPackages(normalizePackages(data?.packages || [], nextPriceMap))
       } catch {
         toast.error("Failed to load price list")
       } finally {
@@ -268,7 +312,7 @@ export default function PriceListPage() {
         return
       }
 
-      setPackages(data?.packages || [])
+      setPackages(normalizePackages(data?.packages || [], priceMap))
       toast.success(data?.message || "Package saved successfully")
       resetForm()
     } catch {
@@ -284,7 +328,7 @@ export default function PriceListPage() {
       packageName: item.packageName,
       price: item.price,
       validityHours: item.validityHours,
-      resources: item.packageResources.map((row) => ({
+      resources: sortPackageResources(item.packageResources, priceMap).map((row) => ({
         rowId: Date.now() + Math.random() + row.fileName,
         fileName: row.fileName,
         minQty: row.minQty,
@@ -325,7 +369,7 @@ export default function PriceListPage() {
         return
       }
 
-      setPackages(data?.packages || [])
+      setPackages(normalizePackages(data?.packages || [], priceMap))
       if (editingId === deleteTarget.id) {
         resetForm()
       }
@@ -523,7 +567,7 @@ export default function PriceListPage() {
 
                         <div className="overflow-x-auto">
                           <div className="flex min-w-max gap-2 pb-2">
-                            {resourceOptions.map((resource) => {
+                            {sortedResourceOptions.map((resource) => {
                               const selected = row.fileName === resource.fileName
 
                               return (

@@ -6,6 +6,9 @@ import Withdraw from "@/models/Withdraw"
 import SettingsConfig from "@/models/SettingsConfig"
 import Transaction from "@/models/Transaction"
 
+const LIMIT_WINDOW_HOURS = 24
+const LIMIT_WINDOW_MS = LIMIT_WINDOW_HOURS * 60 * 60 * 1000
+
 function clearTokenCookie(response) {
   response.cookies.set("token", "", {
     httpOnly: true,
@@ -53,12 +56,18 @@ function normalizeMoney(value) {
 function getSettingsValues(config) {
   const minimumWithdraw = Number(config?.minimumWithdraw)
   const withdrawFee = Number(config?.withdrawFee)
+  const dailyWithdrawCount = Number(config?.dailyWithdrawCount)
+  const dailyMaxWithdraw = Number(config?.dailyMaxWithdraw)
 
   return {
     minimumWithdrawAmount:
       Number.isFinite(minimumWithdraw) && minimumWithdraw > 0 ? minimumWithdraw : 50,
     withdrawFeePercent:
       Number.isFinite(withdrawFee) && withdrawFee >= 0 ? withdrawFee : 0,
+    dailyWithdrawCountLimit:
+      Number.isFinite(dailyWithdrawCount) && dailyWithdrawCount > 0 ? dailyWithdrawCount : 0,
+    dailyMaxWithdrawLimit:
+      Number.isFinite(dailyMaxWithdraw) && dailyMaxWithdraw > 0 ? dailyMaxWithdraw : 0,
   }
 }
 
@@ -67,10 +76,10 @@ function mapWithdraw(item) {
     id: item._id.toString(),
     method: item.method,
     number: item.number,
-    amount: item.amount,
-    feePercent: item.feePercent ?? 0,
-    feeAmount: item.feeAmount ?? 0,
-    payableAmount: item.payableAmount ?? item.amount,
+    amount: Number(item.amount || 0),
+    feePercent: Number(item.feePercent || 0),
+    feeAmount: Number(item.feeAmount || 0),
+    payableAmount: Number(item.payableAmount ?? item.amount ?? 0),
     status: item.status,
     createdAt: item.createdAt,
   }
@@ -81,6 +90,46 @@ function formatMoney(value) {
     minimumFractionDigits: 0,
     maximumFractionDigits: 2,
   })
+}
+
+function formatDateTime(value) {
+  if (!value) return ""
+
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return ""
+
+  return date.toLocaleString("en-BD", {
+    timeZone: "Asia/Dhaka",
+    year: "numeric",
+    month: "short",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  })
+}
+
+function formatDuration(ms) {
+  const safeMs = Math.max(Number(ms || 0), 0)
+
+  if (!safeMs) {
+    return "0m"
+  }
+
+  const totalSeconds = Math.ceil(safeMs / 1000)
+  const hours = Math.floor(totalSeconds / 3600)
+  const minutes = Math.floor((totalSeconds % 3600) / 60)
+  const seconds = totalSeconds % 60
+
+  if (hours > 0) {
+    return `${hours}h ${String(minutes).padStart(2, "0")}m`
+  }
+
+  if (minutes > 0) {
+    return `${minutes}m ${String(seconds).padStart(2, "0")}s`
+  }
+
+  return `${seconds}s`
 }
 
 function getBangladeshTime() {
@@ -143,6 +192,193 @@ async function sendTelegramMessage(message) {
   }
 }
 
+function getWindowStart() {
+  return new Date(Date.now() - LIMIT_WINDOW_MS)
+}
+
+function sortWithdrawsAscendingByTime(items) {
+  return [...items].sort(
+    (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+  )
+}
+
+function buildUsageStats(recentWithdraws, limits) {
+  const usedCount = recentWithdraws.length
+  const usedAmount = normalizeMoney(
+    recentWithdraws.reduce((sum, item) => sum + Number(item.amount || 0), 0)
+  )
+
+  const remainingCount = limits.dailyWithdrawCountLimit
+    ? Math.max(limits.dailyWithdrawCountLimit - usedCount, 0)
+    : null
+
+  const remainingAmount = limits.dailyMaxWithdrawLimit
+    ? normalizeMoney(Math.max(limits.dailyMaxWithdrawLimit - usedAmount, 0))
+    : null
+
+  const countUsagePercent = limits.dailyWithdrawCountLimit
+    ? Math.min(100, Math.round((usedCount / limits.dailyWithdrawCountLimit) * 100))
+    : 0
+
+  const amountUsagePercent = limits.dailyMaxWithdrawLimit
+    ? Math.min(100, Math.round((usedAmount / limits.dailyMaxWithdrawLimit) * 100))
+    : 0
+
+  return {
+    limitWindowHours: LIMIT_WINDOW_HOURS,
+    dailyWithdrawCountLimit: limits.dailyWithdrawCountLimit,
+    dailyMaxWithdrawLimit: limits.dailyMaxWithdrawLimit,
+    last24HourWithdrawCount: usedCount,
+    last24HourWithdrawAmount: usedAmount,
+    remainingWithdrawCount: remainingCount,
+    remainingWithdrawAmount: remainingAmount,
+    countUsagePercent,
+    amountUsagePercent,
+    isCountLimited: limits.dailyWithdrawCountLimit > 0,
+    isAmountLimited: limits.dailyMaxWithdrawLimit > 0,
+    isCountBlocked: limits.dailyWithdrawCountLimit > 0 && usedCount >= limits.dailyWithdrawCountLimit,
+    isAmountBlocked:
+      limits.dailyMaxWithdrawLimit > 0 && remainingAmount !== null && remainingAmount <= 0,
+  }
+}
+
+function getCountRetryAt(recentWithdrawsAsc, countLimit) {
+  if (!countLimit || recentWithdrawsAsc.length < countLimit) {
+    return null
+  }
+
+  const expireCount = recentWithdrawsAsc.length - countLimit + 1
+  const pivot = recentWithdrawsAsc[Math.max(expireCount - 1, 0)]
+
+  if (!pivot?.createdAt) {
+    return null
+  }
+
+  return new Date(new Date(pivot.createdAt).getTime() + LIMIT_WINDOW_MS)
+}
+
+function getAmountRetryAt(recentWithdrawsAsc, amountLimit, requestedAmount) {
+  if (!amountLimit) {
+    return null
+  }
+
+  let rollingAmount = normalizeMoney(
+    recentWithdrawsAsc.reduce((sum, item) => sum + Number(item.amount || 0), 0)
+  )
+
+  if (rollingAmount + requestedAmount <= amountLimit) {
+    return null
+  }
+
+  for (const item of recentWithdrawsAsc) {
+    rollingAmount = normalizeMoney(rollingAmount - Number(item.amount || 0))
+
+    if (rollingAmount + requestedAmount <= amountLimit) {
+      return new Date(new Date(item.createdAt).getTime() + LIMIT_WINDOW_MS)
+    }
+  }
+
+  return recentWithdrawsAsc.length
+    ? new Date(new Date(recentWithdrawsAsc[recentWithdrawsAsc.length - 1].createdAt).getTime() + LIMIT_WINDOW_MS)
+    : null
+}
+
+function buildLimitPayload({ recentWithdraws, limits, requestedAmount = 0 }) {
+  const recentWithdrawsAsc = sortWithdrawsAscendingByTime(recentWithdraws)
+  const stats = buildUsageStats(recentWithdrawsAsc, limits)
+
+  const countWouldBlock =
+    limits.dailyWithdrawCountLimit > 0 &&
+    recentWithdrawsAsc.length >= limits.dailyWithdrawCountLimit
+
+  const amountWouldBlock =
+    limits.dailyMaxWithdrawLimit > 0 &&
+    requestedAmount > 0 &&
+    stats.last24HourWithdrawAmount + requestedAmount > limits.dailyMaxWithdrawLimit
+
+  const countRetryAt = countWouldBlock
+    ? getCountRetryAt(recentWithdrawsAsc, limits.dailyWithdrawCountLimit)
+    : null
+
+  const amountRetryAt = amountWouldBlock
+    ? getAmountRetryAt(
+        recentWithdrawsAsc,
+        limits.dailyMaxWithdrawLimit,
+        requestedAmount
+      )
+    : null
+
+  const blockers = [countRetryAt, amountRetryAt].filter(Boolean)
+  const retryAt = blockers.length
+    ? new Date(Math.max(...blockers.map((item) => item.getTime())))
+    : null
+
+  const retryInMs = retryAt ? Math.max(retryAt.getTime() - Date.now(), 0) : 0
+  const retryInText = retryAt ? formatDuration(retryInMs) : ""
+
+  const currentAllowedAmount =
+    stats.remainingWithdrawAmount === null ? null : normalizeMoney(stats.remainingWithdrawAmount)
+
+  const amountShortBy =
+    limits.dailyMaxWithdrawLimit > 0
+      ? normalizeMoney(
+          Math.max(
+            requestedAmount - (stats.remainingWithdrawAmount || 0),
+            0
+          )
+        )
+      : 0
+
+  return {
+    limitBlocked: countWouldBlock || amountWouldBlock,
+    limitType:
+      countWouldBlock && amountWouldBlock
+        ? "count_and_amount"
+        : countWouldBlock
+        ? "count"
+        : amountWouldBlock
+        ? "amount"
+        : "",
+    retryAt: retryAt ? retryAt.toISOString() : null,
+    retryAtText: retryAt ? formatDateTime(retryAt) : "",
+    retryInMs,
+    retryInText,
+    currentAllowedAmount,
+    amountShortBy,
+    stats,
+    countWouldBlock,
+    amountWouldBlock,
+  }
+}
+
+function buildAvailabilityPayload(recentWithdraws, limits) {
+  const stats = buildUsageStats(recentWithdraws, limits)
+  const countRetryAt = stats.isCountBlocked
+    ? getCountRetryAt(sortWithdrawsAscendingByTime(recentWithdraws), limits.dailyWithdrawCountLimit)
+    : null
+  const amountRetryAt = stats.isAmountBlocked
+    ? getAmountRetryAt(
+        sortWithdrawsAscendingByTime(recentWithdraws),
+        limits.dailyMaxWithdrawLimit,
+        1
+      )
+    : null
+
+  const blockers = [countRetryAt, amountRetryAt].filter(Boolean)
+  const retryAt = blockers.length
+    ? new Date(Math.max(...blockers.map((item) => item.getTime())))
+    : null
+
+  return {
+    ...stats,
+    canWithdrawNow: !stats.isCountBlocked && !stats.isAmountBlocked,
+    retryAt: retryAt ? retryAt.toISOString() : null,
+    retryAtText: retryAt ? formatDateTime(retryAt) : "",
+    retryInMs: retryAt ? Math.max(retryAt.getTime() - Date.now(), 0) : 0,
+    retryInText: retryAt ? formatDuration(Math.max(retryAt.getTime() - Date.now(), 0)) : "",
+  }
+}
+
 export async function GET(req) {
   const auth = getAuthUser(req)
 
@@ -158,10 +394,16 @@ export async function GET(req) {
   try {
     await connectDB()
 
-    const [user, config, withdraws] = await Promise.all([
+    const [user, config, withdraws, recentWithdraws] = await Promise.all([
       User.findById(auth.id).select("withdrawBalance").lean(),
       SettingsConfig.findOne({ configKey: "main" }).lean(),
       Withdraw.find({ userId: auth.id }).sort({ createdAt: -1 }).lean(),
+      Withdraw.find({
+        userId: auth.id,
+        createdAt: { $gte: getWindowStart() },
+      })
+        .sort({ createdAt: 1 })
+        .lean(),
     ])
 
     if (!user) {
@@ -171,14 +413,16 @@ export async function GET(req) {
       )
     }
 
-    const { minimumWithdrawAmount, withdrawFeePercent } = getSettingsValues(config)
+    const limits = getSettingsValues(config)
+    const limitStats = buildAvailabilityPayload(recentWithdraws, limits)
 
     return NextResponse.json(
       {
-        minWithdrawAmount: minimumWithdrawAmount,
-        withdrawFeePercent,
+        minWithdrawAmount: limits.minimumWithdrawAmount,
+        withdrawFeePercent: limits.withdrawFeePercent,
         withdrawBalance: Number(user.withdrawBalance || 0),
         withdraws: withdraws.map(mapWithdraw),
+        limitStats,
       },
       { status: 200 }
     )
@@ -232,9 +476,15 @@ export async function POST(req) {
 
     await connectDB()
 
-    const [user, config] = await Promise.all([
+    const [user, config, recentWithdraws] = await Promise.all([
       User.findById(auth.id).select("fullName withdrawBalance"),
       SettingsConfig.findOne({ configKey: "main" }).lean(),
+      Withdraw.find({
+        userId: auth.id,
+        createdAt: { $gte: getWindowStart() },
+      })
+        .sort({ createdAt: 1 })
+        .lean(),
     ])
 
     if (!user) {
@@ -244,12 +494,12 @@ export async function POST(req) {
       )
     }
 
-    const { minimumWithdrawAmount, withdrawFeePercent } = getSettingsValues(config)
+    const limits = getSettingsValues(config)
 
-    if (amount < minimumWithdrawAmount) {
+    if (amount < limits.minimumWithdrawAmount) {
       return NextResponse.json(
         {
-          message: `Minimum withdraw amount is ৳${formatMoney(minimumWithdrawAmount)}`,
+          message: `Minimum withdraw amount is ৳${formatMoney(limits.minimumWithdrawAmount)}`,
         },
         { status: 400 }
       )
@@ -257,11 +507,11 @@ export async function POST(req) {
 
     const currentWithdrawBalance = Number(user.withdrawBalance || 0)
 
-    if (currentWithdrawBalance < minimumWithdrawAmount) {
+    if (currentWithdrawBalance < limits.minimumWithdrawAmount) {
       return NextResponse.json(
         {
           message: `Your withdraw balance must be at least ৳${formatMoney(
-            minimumWithdrawAmount
+            limits.minimumWithdrawAmount
           )}`,
         },
         { status: 400 }
@@ -275,7 +525,53 @@ export async function POST(req) {
       )
     }
 
-    const feeAmount = normalizeMoney((amount * withdrawFeePercent) / 100)
+    const limitCheck = buildLimitPayload({
+      recentWithdraws,
+      limits,
+      requestedAmount: amount,
+    })
+
+    if (limitCheck.limitBlocked) {
+      const stats = limitCheck.stats
+      const message = buildLimitMessage(limitCheck, amount)
+
+      return NextResponse.json(
+        {
+          message,
+          limitBlocked: true,
+          limitType: limitCheck.limitType,
+          retryAt: limitCheck.retryAt,
+          retryAtText: limitCheck.retryAtText,
+          retryInMs: limitCheck.retryInMs,
+          retryInText: limitCheck.retryInText,
+          limitStats: {
+            ...stats,
+            canWithdrawNow: !stats.isCountBlocked && !stats.isAmountBlocked,
+          },
+          limitModal: {
+            type: limitCheck.limitType,
+            requestedAmount: amount,
+            retryAt: limitCheck.retryAt,
+            retryAtText: limitCheck.retryAtText,
+            retryInMs: limitCheck.retryInMs,
+            retryInText: limitCheck.retryInText,
+            currentAllowedAmount: limitCheck.currentAllowedAmount,
+            amountShortBy: limitCheck.amountShortBy,
+            countWouldBlock: limitCheck.countWouldBlock,
+            amountWouldBlock: limitCheck.amountWouldBlock,
+            dailyWithdrawCountLimit: stats.dailyWithdrawCountLimit,
+            dailyMaxWithdrawLimit: stats.dailyMaxWithdrawLimit,
+            last24HourWithdrawCount: stats.last24HourWithdrawCount,
+            last24HourWithdrawAmount: stats.last24HourWithdrawAmount,
+            remainingWithdrawCount: stats.remainingWithdrawCount,
+            remainingWithdrawAmount: stats.remainingWithdrawAmount,
+          },
+        },
+        { status: 429 }
+      )
+    }
+
+    const feeAmount = normalizeMoney((amount * limits.withdrawFeePercent) / 100)
     const payableAmount = normalizeMoney(Math.max(amount - feeAmount, 0))
     const updatedWithdrawBalance = normalizeMoney(currentWithdrawBalance - amount)
 
@@ -284,7 +580,7 @@ export async function POST(req) {
     const withdraw = await Withdraw.create({
       userId: auth.id,
       amount,
-      feePercent: withdrawFeePercent,
+      feePercent: limits.withdrawFeePercent,
       feeAmount,
       payableAmount,
       number,
@@ -300,7 +596,7 @@ export async function POST(req) {
       type: "withdraw",
       note: `You requested a withdraw of BDT ${formatMoney(
         amount
-      )} via ${method === "bkash" ? "bKash" : "Nagad"}. Fee ${withdrawFeePercent}% (BDT ${formatMoney(
+      )} via ${method === "bkash" ? "bKash" : "Nagad"}. Fee ${limits.withdrawFeePercent}% (BDT ${formatMoney(
         feeAmount
       )}). You will receive BDT ${formatMoney(payableAmount)}.`,
     })
@@ -314,6 +610,11 @@ export async function POST(req) {
 
     await sendTelegramMessage(telegramMessage)
 
+    const nextLimitStats = buildAvailabilityPayload(
+      [...recentWithdraws, withdraw.toObject()],
+      limits
+    )
+
     return NextResponse.json(
       {
         message: `Withdraw request submitted successfully. You will receive ৳${formatMoney(
@@ -321,6 +622,7 @@ export async function POST(req) {
         )}`,
         withdraw: mapWithdraw(withdraw),
         withdrawBalance: updatedWithdrawBalance,
+        limitStats: nextLimitStats,
       },
       { status: 201 }
     )
@@ -332,4 +634,28 @@ export async function POST(req) {
       { status: 500 }
     )
   }
+}
+
+function buildLimitMessage(limitCheck, requestedAmount) {
+  const stats = limitCheck.stats
+
+  if (limitCheck.limitType === "count") {
+    return `You already used ${stats.last24HourWithdrawCount}/${stats.dailyWithdrawCountLimit} withdraw requests in the last ${LIMIT_WINDOW_HOURS} hours. Try again after ${limitCheck.retryInText || "some time"}.`
+  }
+
+  if (limitCheck.limitType === "amount") {
+    if ((limitCheck.currentAllowedAmount || 0) > 0) {
+      return `Your requested amount exceeds the last ${LIMIT_WINDOW_HOURS}-hour withdraw limit. You can withdraw up to ৳${formatMoney(
+        limitCheck.currentAllowedAmount
+      )} now, or try ৳${formatMoney(requestedAmount)} after ${limitCheck.retryInText || "some time"}.`
+    }
+
+    return `You already used ৳${formatMoney(
+      stats.last24HourWithdrawAmount
+    )} of your ৳${formatMoney(
+      stats.dailyMaxWithdrawLimit
+    )} limit in the last ${LIMIT_WINDOW_HOURS} hours. Try again after ${limitCheck.retryInText || "some time"}.`
+  }
+
+  return `Your request crosses both the request count and amount limit for the last ${LIMIT_WINDOW_HOURS} hours. Try again after ${limitCheck.retryInText || "some time"}.`
 }

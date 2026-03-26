@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import toast, { Toaster } from "react-hot-toast"
 import {
   HiOutlinePhone,
@@ -25,7 +25,48 @@ export default function LoginPage() {
   const router = useRouter()
   const [show, setShow] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [supportLoading, setSupportLoading] = useState(true)
+  const [supportNumber, setSupportNumber] = useState("")
   const [form, setForm] = useState({ phone: "", password: "" })
+
+  useEffect(() => {
+    let ignore = false
+
+    async function loadSupportDetails() {
+      try {
+        setSupportLoading(true)
+
+        const res = await fetch("/api/support-details", {
+          method: "GET",
+          cache: "no-store",
+        })
+
+        const data = await res.json().catch(() => ({}))
+
+        if (!res.ok) {
+          throw new Error(data?.message || "Failed to load support details")
+        }
+
+        if (!ignore) {
+          setSupportNumber(String(data?.forgotPasswordNumber || "").trim())
+        }
+      } catch {
+        if (!ignore) {
+          setSupportNumber("")
+        }
+      } finally {
+        if (!ignore) {
+          setSupportLoading(false)
+        }
+      }
+    }
+
+    loadSupportDetails()
+
+    return () => {
+      ignore = true
+    }
+  }, [])
 
   const onChange = (key, value) => {
     setForm((prev) => ({ ...prev, [key]: value }))
@@ -72,18 +113,45 @@ export default function LoginPage() {
       toast.success(data?.message || "লগইন সফল")
       router.replace("/users/dashboard")
       router.refresh()
-    } catch (error) {
+    } catch {
       toast.error("সার্ভার এরর")
     } finally {
       setLoading(false)
     }
   }
 
-  const WHATSAPP_NUMBER = "8801XXXXXXXXX"
-  const whatsappMessage = encodeURIComponent(
-    `Hello Support,\nI forgot my password.\nPlease help me recover my account.\nMobile Number: ${form.phone || ""}`
-  )
-  const whatsappLink = `https://wa.me/${WHATSAPP_NUMBER}?text=${whatsappMessage}`
+  const whatsappLink = useMemo(() => {
+    const normalized = normalizeWhatsappNumber(supportNumber)
+
+    if (!normalized) {
+      return ""
+    }
+
+    const whatsappMessage = encodeURIComponent(
+      `Hello Support,\nI forgot my password.\nPlease help me recover my account.\nMobile Number: ${form.phone || ""}`
+    )
+
+    return `https://wa.me/${normalized}?text=${whatsappMessage}`
+  }, [supportNumber, form.phone])
+
+  const handleSupportClick = (e) => {
+    if (whatsappLink) {
+      return
+    }
+
+    e.preventDefault()
+
+    if (supportLoading) {
+      toast.error("Support number is loading")
+      return
+    }
+
+    toast.error("WhatsApp support number is not available")
+  }
+
+  const supportText = supportLoading
+    ? "Loading support..."
+    : supportNumber || "Support unavailable"
 
   return (
     <main className="relative h-screen overflow-hidden bg-[#081120] px-4 py-4 text-white sm:px-6">
@@ -190,10 +258,15 @@ export default function LoginPage() {
       </div>
 
       <a
-        href={whatsappLink}
+        href={whatsappLink || "#"}
         target="_blank"
         rel="noopener noreferrer"
-        className="group fixed bottom-4 right-4 z-50 flex items-center gap-2.5 rounded-full border border-white/10 bg-[#22c55e] px-3 py-2 text-white transition-all duration-300 hover:scale-[1.03] active:scale-95"
+        onClick={handleSupportClick}
+        className={`group fixed bottom-4 right-4 z-50 flex items-center gap-2.5 rounded-full border border-white/10 px-3 py-2 text-white transition-all duration-300 active:scale-95 ${
+          whatsappLink
+            ? "bg-[#22c55e] hover:scale-[1.03]"
+            : "bg-[#1f2937]"
+        }`}
         style={{ boxShadow: whatsappShadow }}
         aria-label="Contact support on WhatsApp"
       >
@@ -206,8 +279,23 @@ export default function LoginPage() {
             Forgot Password?
           </p>
           <p className="text-[12px] font-semibold">WhatsApp Support</p>
+          <p className="mt-0.5 text-[10px] text-white/75">{supportText}</p>
         </div>
       </a>
     </main>
   )
+}
+
+function normalizeWhatsappNumber(value) {
+  const onlyDigits = String(value || "").replace(/\D/g, "")
+
+  if (/^8801\d{9}$/.test(onlyDigits)) {
+    return onlyDigits
+  }
+
+  if (/^01\d{9}$/.test(onlyDigits)) {
+    return `88${onlyDigits}`
+  }
+
+  return ""
 }

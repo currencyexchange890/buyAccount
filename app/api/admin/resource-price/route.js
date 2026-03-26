@@ -61,6 +61,20 @@ async function getOrCreateResourceConfig() {
   return config
 }
 
+function sortResourcesByPrice(items) {
+  return [...items].sort((a, b) => {
+    const priceDiff = Number(a?.price || 0) - Number(b?.price || 0)
+
+    if (priceDiff !== 0) {
+      return priceDiff
+    }
+
+    return String(a?.name || a?.fileName || "").localeCompare(
+      String(b?.name || b?.fileName || "")
+    )
+  })
+}
+
 export async function GET(req) {
   const auth = await verifyAdmin(req)
 
@@ -77,17 +91,20 @@ export async function GET(req) {
     await connectDB()
 
     const config = await getOrCreateResourceConfig()
+    const resources = sortResourcesByPrice(
+      config.resources.map((item) => ({
+        name: item.name,
+        fileName: item.fileName,
+        image: `/image/${encodeURIComponent(item.fileName)}`,
+        price: item.price ?? 0,
+      }))
+    ).map((item, index) => ({
+      id: index + 1,
+      ...item,
+    }))
 
     return NextResponse.json(
-      {
-        resources: config.resources.map((item, index) => ({
-          id: index + 1,
-          name: item.name,
-          fileName: item.fileName,
-          image: `/image/${encodeURIComponent(item.fileName)}`,
-          price: item.price ?? 0,
-        })),
-      },
+      { resources },
       { status: 200 }
     )
   } catch {

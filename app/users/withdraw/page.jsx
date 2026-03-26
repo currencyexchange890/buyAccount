@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import toast, { Toaster } from "react-hot-toast"
-import { HiOutlinePhone, HiArrowUp } from "react-icons/hi"
+import { HiOutlinePhone, HiArrowUp, HiOutlineX, HiOutlineClock } from "react-icons/hi"
 
 const methods = [
   { key: "bkash", label: "bKash" },
@@ -19,6 +19,27 @@ const formShadow =
 const btnShadow =
   "10px 10px 24px rgba(18,40,88,.42), -4px -4px 10px rgba(255,255,255,.08), inset 1px 1px 0 rgba(255,255,255,.22), inset -2px -2px 0 rgba(0,0,0,.12)"
 
+const defaultLimitStats = {
+  limitWindowHours: 24,
+  dailyWithdrawCountLimit: 0,
+  dailyMaxWithdrawLimit: 0,
+  last24HourWithdrawCount: 0,
+  last24HourWithdrawAmount: 0,
+  remainingWithdrawCount: null,
+  remainingWithdrawAmount: null,
+  countUsagePercent: 0,
+  amountUsagePercent: 0,
+  isCountLimited: false,
+  isAmountLimited: false,
+  isCountBlocked: false,
+  isAmountBlocked: false,
+  canWithdrawNow: true,
+  retryAt: null,
+  retryAtText: "",
+  retryInMs: 0,
+  retryInText: "",
+}
+
 export default function WithdrawPage() {
   const router = useRouter()
 
@@ -32,6 +53,9 @@ export default function WithdrawPage() {
   const [withdrawBalance, setWithdrawBalance] = useState(0)
   const [minWithdraw, setMinWithdraw] = useState(50)
   const [withdrawFeePercent, setWithdrawFeePercent] = useState(0)
+  const [limitStats, setLimitStats] = useState(defaultLimitStats)
+  const [limitModal, setLimitModal] = useState(null)
+  const [countdown, setCountdown] = useState("")
 
   const nAmount = useMemo(() => {
     const n = Number(String(amount).replace(/\D/g, ""))
@@ -90,6 +114,7 @@ export default function WithdrawPage() {
           setWithdrawBalance(Number(data?.withdrawBalance || 0))
           setMinWithdraw(Number(data?.minWithdrawAmount || 50))
           setWithdrawFeePercent(Number(data?.withdrawFeePercent || 0))
+          setLimitStats(normalizeLimitStats(data?.limitStats))
         }
       } catch (err) {
         console.error(err)
@@ -107,6 +132,22 @@ export default function WithdrawPage() {
       ignore = true
     }
   }, [router])
+
+  useEffect(() => {
+    if (!limitModal?.retryAt) {
+      setCountdown("")
+      return undefined
+    }
+
+    const updateCountdown = () => {
+      setCountdown(formatCountdown(limitModal.retryAt))
+    }
+
+    updateCountdown()
+    const timer = setInterval(updateCountdown, 1000)
+
+    return () => clearInterval(timer)
+  }, [limitModal])
 
   function handleAmountChange(value) {
     const clean = String(value).replace(/\D/g, "").slice(0, 7)
@@ -145,6 +186,13 @@ export default function WithdrawPage() {
         return
       }
 
+      if (res.status === 429 || data?.limitBlocked) {
+        setLimitStats(normalizeLimitStats(data?.limitStats))
+        setLimitModal(data?.limitModal || null)
+        toast.error(data?.message || "Withdraw limit reached")
+        return
+      }
+
       if (!res.ok) {
         throw new Error(data?.message || "Failed to create withdraw request")
       }
@@ -157,9 +205,11 @@ export default function WithdrawPage() {
         setWithdrawBalance(Number(data.withdrawBalance || 0))
       }
 
+      setLimitStats(normalizeLimitStats(data?.limitStats))
       setAmount("")
       setNumber("")
       setMethod("bkash")
+      setLimitModal(null)
 
       toast.success(data?.message || "Withdraw request submitted successfully")
     } catch (err) {
@@ -217,6 +267,72 @@ export default function WithdrawPage() {
                 .
               </p>
             </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <StatBox
+                label="Daily Count"
+                value={
+                  limitStats.isCountLimited
+                    ? `${limitStats.last24HourWithdrawCount}/${limitStats.dailyWithdrawCountLimit}`
+                    : "Unlimited"
+                }
+                hint={
+                  limitStats.isCountLimited
+                    ? `${limitStats.remainingWithdrawCount ?? 0} requests left`
+                    : "No count cap"
+                }
+              />
+              <StatBox
+                label="Daily Amount"
+                value={
+                  limitStats.isAmountLimited
+                    ? `৳${formatMoney(limitStats.last24HourWithdrawAmount)}`
+                    : "Unlimited"
+                }
+                hint={
+                  limitStats.isAmountLimited
+                    ? `Left ৳${formatMoney(limitStats.remainingWithdrawAmount || 0)}`
+                    : "No amount cap"
+                }
+              />
+            </div>
+
+            <ProgressCard
+              title="Request Limit Progress"
+              current={limitStats.last24HourWithdrawCount}
+              total={limitStats.dailyWithdrawCountLimit}
+              percent={limitStats.countUsagePercent}
+              unit="requests"
+            />
+
+            <ProgressCard
+              title="Amount Limit Progress"
+              current={limitStats.last24HourWithdrawAmount}
+              total={limitStats.dailyMaxWithdrawLimit}
+              percent={limitStats.amountUsagePercent}
+              unit="amount"
+              money
+            />
+
+            {(limitStats.isCountBlocked || limitStats.isAmountBlocked) && (
+              <div
+                className="rounded-2xl border border-[#f59e0b]/25 bg-[#f59e0b]/10 px-4 py-3"
+                style={{ boxShadow: fieldShadow }}
+              >
+                <p className="text-sm font-semibold text-[#fde68a]">
+                  {limitStats.isCountBlocked && limitStats.isAmountBlocked
+                    ? "You have reached both request and amount limit for the last 24 hours."
+                    : limitStats.isCountBlocked
+                    ? "You have reached the request count limit for the last 24 hours."
+                    : "You have used the full withdraw amount limit for the last 24 hours."}
+                </p>
+                {limitStats.retryAtText ? (
+                  <p className="mt-1 text-[12px] text-[#fde68a]/90">
+                    Next retry window: {limitStats.retryAtText}
+                  </p>
+                ) : null}
+              </div>
+            )}
 
             <div
               className="rounded-2xl border border-white/10 bg-[#0f1a33] p-4"
@@ -284,6 +400,17 @@ export default function WithdrawPage() {
                 >
                   <p className="text-sm font-semibold text-[#fca5a5]">
                     Withdraw amount exceeds your withdraw balance.
+                  </p>
+                </div>
+              )}
+
+              {limitStats.isAmountLimited && !limitStats.isAmountBlocked && nAmount > (limitStats.remainingWithdrawAmount || 0) && (
+                <div
+                  className="mt-3 rounded-2xl border border-[#f59e0b]/25 bg-[#f59e0b]/10 px-4 py-3"
+                  style={{ boxShadow: fieldShadow }}
+                >
+                  <p className="text-sm font-semibold text-[#fde68a]">
+                    You can withdraw up to ৳{formatMoney(limitStats.remainingWithdrawAmount || 0)} now within the last 24-hour amount limit.
                   </p>
                 </div>
               )}
@@ -403,7 +530,154 @@ export default function WithdrawPage() {
           </div>
         </section>
       </div>
+
+      {limitModal && (
+        <LimitModal
+          data={limitModal}
+          countdown={countdown}
+          onClose={() => setLimitModal(null)}
+        />
+      )}
     </main>
+  )
+}
+
+function StatBox({ label, value, hint }) {
+  return (
+    <div
+      className="rounded-2xl border border-white/10 bg-[#0f1a33] p-4"
+      style={{ boxShadow: fieldShadow }}
+    >
+      <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-white/35">
+        {label}
+      </p>
+      <p className="mt-2 text-lg font-semibold text-white">{value}</p>
+      <p className="mt-1 text-[12px] text-white/45">{hint}</p>
+    </div>
+  )
+}
+
+function ProgressCard({ title, current, total, percent, unit, money = false }) {
+  const unlimited = !Number(total)
+
+  const currentText = money ? `৳${formatMoney(current)}` : formatMoney(current)
+  const totalText = money ? `৳${formatMoney(total)}` : formatMoney(total)
+
+  return (
+    <div
+      className="rounded-2xl border border-white/10 bg-[#0f1a33] p-4"
+      style={{ boxShadow: fieldShadow }}
+    >
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-sm font-semibold text-white">{title}</p>
+        <p className="text-[11px] text-white/45">
+          {unlimited ? "Unlimited" : `${currentText} / ${totalText}`}
+        </p>
+      </div>
+
+      <div className="mt-3 h-3 overflow-hidden rounded-full bg-white/8">
+        <div
+          className={`h-full rounded-full ${percent >= 100 ? "bg-[#ef4444]" : percent >= 80 ? "bg-[#f59e0b]" : "bg-[#3b82f6]"}`}
+          style={{ width: unlimited ? "0%" : `${Math.max(0, Math.min(percent, 100))}%` }}
+        />
+      </div>
+
+      <p className="mt-2 text-[12px] text-white/55">
+        {unlimited ? `No ${unit} limit configured.` : `${percent}% of your ${unit} limit is already used.`}
+      </p>
+    </div>
+  )
+}
+
+function LimitModal({ data, countdown, onClose }) {
+  const showCurrentAllowed = !data?.countWouldBlock && Number(data?.currentAllowedAmount || 0) > 0
+
+  return (
+    <div className="fixed inset-0 z-50 grid place-items-center px-3">
+      <div className="absolute inset-0 bg-black/65 backdrop-blur-sm" onClick={onClose} />
+
+      <div
+        className="relative w-full max-w-[360px] rounded-[22px] border border-white/10 bg-[#0a1428] p-4"
+        style={{ boxShadow: "0 30px 120px rgba(0,0,0,.7)" }}
+      >
+        <div className="flex items-start justify-between gap-2">
+          <div>
+            <h3 className="text-lg font-semibold text-white">
+              Withdraw <span className="text-[#60a5fa]">Limit</span>
+            </h3>
+            <p className="mt-1 text-[12px] text-white/45">
+              Last 24-hour usage summary
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={onClose}
+            className="grid h-9 w-9 place-items-center rounded-xl border border-white/10 bg-[#0f1a33] text-white/65 transition hover:text-white"
+            style={{ boxShadow: fieldShadow }}
+            aria-label="Close"
+          >
+            <HiOutlineX className="text-base" />
+          </button>
+        </div>
+
+        <div className="mt-4 space-y-3">
+          <div
+            className="rounded-2xl border border-[#f59e0b]/25 bg-[#f59e0b]/10 px-4 py-3"
+            style={{ boxShadow: fieldShadow }}
+          >
+            <div className="flex items-center gap-2 text-[#fde68a]">
+              <HiOutlineClock className="text-base" />
+              <p className="text-sm font-semibold">Try again after {countdown || data?.retryInText || "some time"}</p>
+            </div>
+            {data?.retryAtText ? (
+              <p className="mt-1 text-[12px] text-[#fde68a]/90">
+                Next full retry time: {data.retryAtText}
+              </p>
+            ) : null}
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <MiniInfo label="Used Requests" value={`${data?.last24HourWithdrawCount || 0}/${data?.dailyWithdrawCountLimit ? data.dailyWithdrawCountLimit : "∞"}`} />
+            <MiniInfo label="Used Amount" value={`৳${formatMoney(data?.last24HourWithdrawAmount || 0)}`} />
+          </div>
+
+          {data?.dailyMaxWithdrawLimit ? (
+            <MiniInfo label="Amount Limit" value={`৳${formatMoney(data.dailyMaxWithdrawLimit)}`} />
+          ) : null}
+
+          {showCurrentAllowed ? (
+            <div
+              className="rounded-2xl border border-[#22c55e]/25 bg-[#22c55e]/10 px-4 py-3"
+              style={{ boxShadow: fieldShadow }}
+            >
+              <p className="text-sm font-semibold text-[#bbf7d0]">
+                You can still withdraw up to ৳{formatMoney(data.currentAllowedAmount)} right now.
+              </p>
+              {Number(data?.amountShortBy || 0) > 0 ? (
+                <p className="mt-1 text-[12px] text-[#bbf7d0]/85">
+                  Your current request is higher by ৳{formatMoney(data.amountShortBy)}.
+                </p>
+              ) : null}
+            </div>
+          ) : null}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function MiniInfo({ label, value }) {
+  return (
+    <div
+      className="rounded-2xl border border-white/10 bg-[#0f1a33] px-4 py-3"
+      style={{ boxShadow: fieldShadow }}
+    >
+      <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-white/35">
+        {label}
+      </p>
+      <p className="mt-1 text-sm font-semibold text-white">{value}</p>
+    </div>
   )
 }
 
@@ -444,4 +718,26 @@ function formatMoney(value) {
     minimumFractionDigits: 0,
     maximumFractionDigits: 2,
   })
+}
+
+function normalizeLimitStats(stats) {
+  return {
+    ...defaultLimitStats,
+    ...stats,
+  }
+}
+
+function formatCountdown(retryAt) {
+  const target = new Date(retryAt)
+  if (Number.isNaN(target.getTime())) {
+    return ""
+  }
+
+  const diff = Math.max(target.getTime() - Date.now(), 0)
+  const totalSeconds = Math.ceil(diff / 1000)
+  const hours = Math.floor(totalSeconds / 3600)
+  const minutes = Math.floor((totalSeconds % 3600) / 60)
+  const seconds = totalSeconds % 60
+
+  return `${String(hours).padStart(2, "0")}h ${String(minutes).padStart(2, "0")}m ${String(seconds).padStart(2, "0")}s`
 }
