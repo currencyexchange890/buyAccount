@@ -35,7 +35,7 @@ const USER_NAV_ITEMS = [
     label: "Transactions",
     Icon: HiOutlineReceiptTax,
   },
-  { href: "/download", label: "Download", Icon: HiOutlineDownload },
+  { href: "/users/download", label: "Download", Icon: HiOutlineDownload },
 ];
 
 const ADMIN_NAV_ITEMS = [
