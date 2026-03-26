@@ -1,16 +1,22 @@
 "use client"
 
+import Image from "next/image"
 import { useState } from "react"
-import {
-  HiOutlineDownload,
-  HiOutlineDeviceMobile,
-  HiOutlineShieldCheck,
-  HiOutlineCheckCircle,
-} from "react-icons/hi"
+import { HiOutlineDownload, HiOutlineCheckCircle } from "react-icons/hi"
 
 const apps = [
-  { id: "buy", title: "Buy Account" },
-  { id: "taptap", title: "Tap Tap Panda" },
+  {
+    id: "account",
+    title: "Account",
+    logo: "/account.webp",
+    file: "/Account.apk",
+  },
+  {
+    id: "panda",
+    title: "Panda",
+    logo: "/panda.png",
+    file: "/Panda.apk",
+  },
 ]
 
 const fieldShadow =
@@ -23,13 +29,57 @@ const btnShadow =
   "10px 10px 24px rgba(18,40,88,.42), -4px -4px 10px rgba(255,255,255,.08), inset 1px 1px 0 rgba(255,255,255,.22), inset -2px -2px 0 rgba(0,0,0,.12)"
 
 export default function DownloadPage() {
-  const [active, setActive] = useState(null)
+  const [progress, setProgress] = useState({
+    account: 0,
+    panda: 0,
+  })
 
-  const activeApp = apps.find((app) => app.id === active)
+  const [downloading, setDownloading] = useState({
+    account: false,
+    panda: false,
+  })
+
+  const [completed, setCompleted] = useState({
+    account: false,
+    panda: false,
+  })
+
+  const handleDownload = (app) => {
+    if (downloading[app.id]) return
+
+    setProgress((prev) => ({ ...prev, [app.id]: 0 }))
+    setCompleted((prev) => ({ ...prev, [app.id]: false }))
+    setDownloading((prev) => ({ ...prev, [app.id]: true }))
+
+    const link = document.createElement("a")
+    link.href = app.file
+    link.download = app.file.split("/").pop()
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+
+    let value = 0
+
+    const timer = setInterval(() => {
+      value += Math.floor(Math.random() * 16) + 8
+
+      if (value >= 100) {
+        value = 100
+        clearInterval(timer)
+
+        setProgress((prev) => ({ ...prev, [app.id]: 100 }))
+        setDownloading((prev) => ({ ...prev, [app.id]: false }))
+        setCompleted((prev) => ({ ...prev, [app.id]: true }))
+        return
+      }
+
+      setProgress((prev) => ({ ...prev, [app.id]: value }))
+    }, 180)
+  }
 
   return (
     <main className="min-h-screen bg-[#081120] text-white flex items-center justify-center px-4 sm:px-6">
-      <div className="w-full max-w-sm">
+      <div className="w-full max-w-md">
         <div className="mb-3 flex justify-start">
           <div
             className="rounded-full bg-[#3b82f6] px-4 py-1.5 text-xs font-semibold text-white"
@@ -43,121 +93,101 @@ export default function DownloadPage() {
         </div>
 
         <div
-          className="rounded-[10px] border border-white/10 bg-[#0a1428] p-6 sm:p-7"
+          className="rounded-[10px] border border-white/10 bg-[#0a1428] p-5 sm:p-6"
           style={{ boxShadow: formShadow }}
         >
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <p className="text-xs font-medium text-white/45">Get your app instantly</p>
-              <h1 className="mt-1 text-3xl font-semibold">
-                Download <span className="text-[#60a5fa]">Apps</span>
-              </h1>
-            </div>
-
-            <div
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-white/10 bg-[#0f1a33] text-[#60a5fa]"
-              style={{ boxShadow: fieldShadow }}
-            >
-              <HiOutlineShieldCheck className="text-xl" />
-            </div>
+          <div className="mb-6">
+            <p className="text-xs font-medium text-white/45">Get your apps instantly</p>
+            <h1 className="mt-1 text-3xl font-semibold">
+              Download <span className="text-[#60a5fa]">Apps</span>
+            </h1>
           </div>
 
-          <div className="mt-6 space-y-3">
-            {apps.map((app) => (
-              <DownloadCard
-                key={app.id}
-                title={app.title}
-                active={active === app.id}
-                onClick={() => setActive(app.id)}
-              />
-            ))}
+          <div className="space-y-4">
+            {apps.map((app) => {
+              const percent = progress[app.id]
+              const isDownloading = downloading[app.id]
+              const isCompleted = completed[app.id]
 
-            <div
-              className="rounded-md border border-white/10 bg-[#0f1a33] p-4"
-              style={{ boxShadow: fieldShadow }}
-            >
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex min-w-0 items-center gap-2">
-                  <HiOutlineDeviceMobile className="shrink-0 text-lg text-[#60a5fa]" />
-                  <div className="truncate text-sm font-semibold text-white/85">
-                    {activeApp ? activeApp.title : "Select an app"}
+              return (
+                <div
+                  key={app.id}
+                  className="rounded-md border border-white/10 bg-[#0f1a33] p-4"
+                  style={{ boxShadow: fieldShadow }}
+                >
+                  <div className="flex items-center gap-3">
+                    <div
+                      className="relative h-14 w-14 shrink-0 overflow-hidden rounded-md border border-white/10 bg-[#101d38]"
+                      style={{ boxShadow: fieldShadow }}
+                    >
+                      <Image
+                        src={app.logo}
+                        alt={app.title}
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="min-w-0">
+                          <h2 className="truncate text-sm font-semibold text-white">
+                            {app.title}
+                          </h2>
+                          <p className="mt-0.5 text-xs text-white/55">
+                            {app.file.replace("/", "")}
+                          </p>
+                        </div>
+
+                        <div className="shrink-0 text-xs font-semibold tabular-nums text-white/80">
+                          {percent}%
+                        </div>
+                      </div>
+
+                      <div className="mt-3 h-2 w-full overflow-hidden rounded-full border border-white/10 bg-[#101d38]">
+                        <div
+                          className="h-full rounded-full bg-[#3b82f6] transition-all duration-200"
+                          style={{
+                            width: `${percent}%`,
+                            boxShadow:
+                              percent > 0 ? "0 0 18px rgba(59,130,246,.45)" : "none",
+                          }}
+                        />
+                      </div>
+
+                      <div className="mt-2 text-xs text-white/65">
+                        {isDownloading
+                          ? "Downloading..."
+                          : isCompleted
+                          ? "Download complete"
+                          : "Tap download icon to start"}
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => handleDownload(app)}
+                      disabled={isDownloading}
+                      className={`grid h-12 w-12 shrink-0 place-items-center rounded-md border transition active:translate-y-[1px] ${
+                        isDownloading
+                          ? "cursor-not-allowed border-white/10 bg-[#101d38] text-white/40"
+                          : "border-white/10 bg-[#3b82f6] text-white hover:brightness-[1.03]"
+                      }`}
+                      style={{ boxShadow: isDownloading ? fieldShadow : btnShadow }}
+                    >
+                      {isCompleted && !isDownloading ? (
+                        <HiOutlineCheckCircle className="text-[22px]" />
+                      ) : (
+                        <HiOutlineDownload className="text-[22px]" />
+                      )}
+                    </button>
                   </div>
                 </div>
-                <div className="shrink-0 text-xs text-white/55">
-                  {activeApp ? "Ready" : "Idle"}
-                </div>
-              </div>
-
-              <div className="mt-4 h-2 w-full overflow-hidden rounded-full border border-white/10 bg-[#101d38]">
-                <div
-                  className="h-full rounded-full bg-[#3b82f6] transition-all duration-300"
-                  style={{
-                    width: activeApp ? "100%" : "0%",
-                    boxShadow: activeApp ? "0 0 18px rgba(59,130,246,.45)" : "none",
-                  }}
-                />
-              </div>
-
-              <div className="mt-3 flex items-center justify-between text-xs">
-                <div className="text-white/55">1 MB</div>
-                <div className="font-semibold tabular-nums text-white/80">
-                  {activeApp ? "100%" : "0%"}
-                </div>
-              </div>
-
-              {activeApp && (
-                <div className="mt-3 flex items-center gap-2 text-xs text-white/70">
-                  <HiOutlineCheckCircle className="text-lg text-[#60a5fa]" />
-                  Ready to download
-                </div>
-              )}
-
-              <button
-                type="button"
-                disabled={!activeApp}
-                className={`mt-4 h-12 w-full rounded-md font-semibold text-white transition active:translate-y-[1px] ${
-                  activeApp
-                    ? "bg-[#3b82f6] hover:brightness-[1.03]"
-                    : "bg-[#101d38] text-white/45 cursor-not-allowed"
-                }`}
-                style={{ boxShadow: activeApp ? btnShadow : fieldShadow }}
-              >
-                {activeApp ? `Download ${activeApp.title}` : "Choose an app first"}
-              </button>
-            </div>
+              )
+            })}
           </div>
         </div>
       </div>
     </main>
-  )
-}
-
-function DownloadCard({ title, active, onClick }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`w-full rounded-md border px-4 py-3.5 flex items-center justify-between gap-3 transition ${
-        active
-          ? "border-[#60a5fa]/30 bg-[#3b82f6] text-white"
-          : "border-white/10 bg-[#0f1a33] text-white/90 hover:text-white"
-      }`}
-      style={{ boxShadow: active ? btnShadow : fieldShadow }}
-    >
-      <div className="min-w-0 text-left">
-        <div className="truncate text-sm font-semibold">{title}</div>
-      </div>
-
-      <div
-        className={`grid h-11 w-11 shrink-0 place-items-center rounded-md border ${
-          active
-            ? "border-white/15 bg-white/10 text-white"
-            : "border-white/10 bg-[#101d38] text-[#60a5fa]"
-        }`}
-        style={{ boxShadow: fieldShadow }}
-      >
-        <HiOutlineDownload className="text-xl" />
-      </div>
-    </button>
   )
 }
