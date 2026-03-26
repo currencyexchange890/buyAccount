@@ -128,7 +128,7 @@ export default function LoginPage() {
     }
 
     const whatsappMessage = encodeURIComponent(
-      `Hello Support,\nI forgot my password.\nPlease help me recover my account.\nMobile Number: ${form.phone || ""}`
+     ` হ্যালো সাপোর্ট,\nআমি আমার পাসওয়ার্ড ভুলে গেছি।\nঅনুগ্রহ করে আমার অ্যাকাউন্ট পুনরুদ্ধারে সাহায্য করুন।\nমোবাইল নম্বর: ${form.phone || ""}`
     )
 
     return `https://wa.me/${normalized}?text=${whatsappMessage}`
@@ -279,7 +279,7 @@ export default function LoginPage() {
             Forgot Password?
           </p>
           <p className="text-[12px] font-semibold">WhatsApp Support</p>
-          <p className="mt-0.5 text-[10px] text-white/75">{supportText}</p>
+    
         </div>
       </a>
     </main>

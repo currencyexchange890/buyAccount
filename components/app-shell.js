@@ -26,16 +26,16 @@ const USER_NAV_ITEMS = [
   { href: "/users/dashboard", label: "Dashboard", Icon: HiOutlineHome },
   { href: "/users/deposit", label: "Deposit", Icon: HiOutlineCash },
   { href: "/users/withdraw", label: "Withdraw", Icon: HiOutlineCreditCard },
-  { href: "/download", label: "Download", Icon: HiOutlineDownload },
   { href: "/users/store", label: "Store", Icon: HiOutlineHome },
+  { href: "/users/pricing", label: "Pricing", Icon: HiOutlineCollection },
+  { href: "/users/accounts", label: "Accounts", Icon: FaAccusoft },
+  { href: "/users/referral", label: "Referral", Icon: HiOutlineTag },
   {
     href: "/users/transactions",
     label: "Transactions",
     Icon: HiOutlineReceiptTax,
   },
-  { href: "/users/referral", label: "Referral", Icon: HiOutlineTag },
-  { href: "/users/pricing", label: "Pricing", Icon: HiOutlineCollection },
-  { href: "/users/accounts", label: "Accounts", Icon: FaAccusoft },
+  { href: "/download", label: "Download", Icon: HiOutlineDownload },
 ];
 
 const ADMIN_NAV_ITEMS = [
