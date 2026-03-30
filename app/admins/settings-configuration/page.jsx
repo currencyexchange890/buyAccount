@@ -389,7 +389,7 @@ export default function SettingsConfigurationPage() {
               />
 
               <FieldCard
-                tag="Cool Down (min)"
+                tag="Cool Down "
                 value={form.coolDown}
                 onChange={(value) => onChange("coolDown", value)}
                 placeholder="30"

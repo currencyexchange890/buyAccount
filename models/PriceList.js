@@ -21,8 +21,11 @@ export const PACKAGE_OPTIONS = [
 
 const PackageResourceSchema = new mongoose.Schema(
   {
+    resourceId: { type: String, default: "", trim: true },
     resourceName: { type: String, required: true, trim: true },
-    fileName: { type: String, required: true, trim: true },
+    fileName: { type: String, default: "", trim: true },
+    imageUrl: { type: String, default: "", trim: true },
+    unitPrice: { type: Number, default: 0, min: 0 },
     minQty: { type: Number, required: true, min: 1 },
     maxQty: { type: Number, required: true, min: 1 },
   },

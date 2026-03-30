@@ -2,8 +2,12 @@ import { NextResponse } from "next/server"
 import jwt from "jsonwebtoken"
 import connectDB from "@/lib/db"
 import User from "@/models/User"
-import ResourcePrice, { defaultResources } from "@/models/ResourcePrice"
-import MyResource, { defaultMyResources } from "@/models/MyResource"
+import MyResource from "@/models/MyResource"
+import {
+  getAllResourcesLean,
+  normalizeResourceImage,
+  sortResourcesByPrice,
+} from "@/lib/resource-utils"
 
 function clearTokenCookie(response) {
   response.cookies.set("token", "", {
@@ -45,30 +49,62 @@ function normalizeMoney(value) {
   return Number(number.toFixed(2))
 }
 
-async function getOrCreateMyResource(userId) {
+function normalizeKey(value) {
+  return String(value || "").trim().toLowerCase()
+}
+
+async function getOrCreateMyResource(userId, catalog) {
   let doc = await MyResource.findOne({ userId })
 
   if (!doc) {
     doc = await MyResource.create({
       userId,
-      resources: defaultMyResources,
+      resources: [],
     })
   }
 
-  const existingNames = new Set(
-    Array.isArray(doc.resources) ? doc.resources.map((item) => item.name) : []
-  )
-
+  const items = Array.isArray(doc.resources) ? doc.resources : []
   let changed = false
 
-  for (const item of defaultMyResources) {
-    if (!existingNames.has(item.name)) {
-      doc.resources.push({
-        name: item.name,
-        stock: 0,
-      })
-      changed = true
+  for (const resource of Array.isArray(catalog) ? catalog : []) {
+    const match = items.find(
+      (item) =>
+        (item.resourceId && item.resourceId === resource.id) ||
+        normalizeKey(item.name) === normalizeKey(resource.name)
+    )
+
+    if (match) {
+      if (match.resourceId !== resource.id) {
+        match.resourceId = resource.id
+        changed = true
+      }
+
+      if (match.name !== resource.name) {
+        match.name = resource.name
+        changed = true
+      }
+
+      if ((match.fileName || "") !== (resource.fileName || "")) {
+        match.fileName = resource.fileName || ""
+        changed = true
+      }
+
+      if ((match.imageUrl || "") !== (resource.image || "")) {
+        match.imageUrl = resource.image || ""
+        changed = true
+      }
+
+      continue
     }
+
+    doc.resources.push({
+      resourceId: resource.id,
+      name: resource.name,
+      fileName: resource.fileName || "",
+      imageUrl: resource.image || "",
+      stock: 0,
+    })
+    changed = true
   }
 
   if (changed) {
@@ -76,19 +112,6 @@ async function getOrCreateMyResource(userId) {
   }
 
   return doc
-}
-
-async function getResourcePriceConfig() {
-  let config = await ResourcePrice.findOne({ configKey: "main" })
-
-  if (!config) {
-    config = await ResourcePrice.create({
-      configKey: "main",
-      resources: defaultResources,
-    })
-  }
-
-  return config
 }
 
 export async function GET(req) {
@@ -106,42 +129,61 @@ export async function GET(req) {
   try {
     await connectDB()
 
-    const [myResource, resourcePrice] = await Promise.all([
-      getOrCreateMyResource(auth.id),
-      getResourcePriceConfig(),
-    ])
+    const catalog = await getAllResourcesLean()
+    const myResource = await getOrCreateMyResource(auth.id, catalog)
 
-    const stockMap = new Map(
-      (myResource.resources || []).map((item) => [item.name, Number(item.stock || 0)])
-    )
+    const currentRows = catalog.map((resource) => {
+      const stockItem = (myResource.resources || []).find(
+        (item) =>
+          (item.resourceId && item.resourceId === resource.id) ||
+          normalizeKey(item.name) === normalizeKey(resource.name)
+      )
 
-    const resources = (resourcePrice.resources || [])
+      const stock = Number(stockItem?.stock || 0)
+      const price = Number(resource.price || 0)
+
+      return {
+        id: resource.id,
+        resourceId: resource.id,
+        name: resource.name,
+        fileName: resource.fileName || "",
+        image: resource.image,
+        imageUrl: resource.image,
+        stock,
+        price,
+        total: normalizeMoney(stock * price),
+      }
+    })
+
+    const orphanRows = (myResource.resources || [])
       .filter((item) => {
-        const hasName = typeof item?.name === "string" && item.name.trim() !== ""
-        const hasFileName =
-          typeof item?.fileName === "string" && item.fileName.trim() !== ""
-        const hasPrice = Number.isFinite(Number(item?.price))
-        return hasName && hasFileName && hasPrice
-      })
-      .map((item, index) => {
-        const name = item.name.trim()
-        const stock = Number(stockMap.get(name) || 0)
-        const price = Number(item.price || 0)
-
-        return {
-          id: index + 1,
-          name,
-          fileName: item.fileName.trim(),
-          image: `/image/${encodeURIComponent(item.fileName.trim())}`,
-          stock,
-          price,
-          total: normalizeMoney(stock * price),
+        const stock = Number(item?.stock || 0)
+        if (stock <= 0) {
+          return false
         }
+
+        return !catalog.some(
+          (resource) =>
+            (item.resourceId && item.resourceId === resource.id) ||
+            normalizeKey(item.name) === normalizeKey(resource.name)
+        )
       })
+      .map((item, index) => ({
+        id: item.resourceId || `orphan-${index + 1}`,
+        resourceId: item.resourceId || "",
+        name: String(item.name || "Unknown Resource").trim(),
+        fileName: String(item.fileName || "").trim(),
+        image: normalizeResourceImage(item),
+        imageUrl: normalizeResourceImage(item),
+        stock: Number(item.stock || 0),
+        price: 0,
+        total: 0,
+        unavailable: true,
+      }))
 
     return NextResponse.json(
       {
-        resources,
+        resources: sortResourcesByPrice([...currentRows, ...orphanRows]),
       },
       { status: 200 }
     )
@@ -167,22 +209,24 @@ export async function POST(req) {
 
   try {
     const body = await req.json()
-    const resourceName = body.resourceName?.trim()
+    const resourceId = String(body?.resourceId || "").trim()
+    const resourceName = String(body?.resourceName || "").trim()
 
-    if (!resourceName) {
+    if (!resourceId && !resourceName) {
       return NextResponse.json(
-        { message: "Resource name is required" },
+        { message: "Resource is required" },
         { status: 400 }
       )
     }
 
     await connectDB()
 
-    const [user, myResource, resourcePrice] = await Promise.all([
+    const [user, catalog] = await Promise.all([
       User.findById(auth.id),
-      getOrCreateMyResource(auth.id),
-      getResourcePriceConfig(),
+      getAllResourcesLean(),
     ])
+
+    const myResource = await getOrCreateMyResource(auth.id, catalog)
 
     if (!user) {
       return NextResponse.json(
@@ -191,7 +235,11 @@ export async function POST(req) {
       )
     }
 
-    const stockItem = myResource.resources.find((item) => item.name === resourceName)
+    const stockItem = (myResource.resources || []).find(
+      (item) =>
+        (resourceId && item.resourceId === resourceId) ||
+        normalizeKey(item.name) === normalizeKey(resourceName)
+    )
 
     if (!stockItem) {
       return NextResponse.json(
@@ -209,8 +257,10 @@ export async function POST(req) {
       )
     }
 
-    const priceItem = (resourcePrice.resources || []).find(
-      (item) => item.name === resourceName
+    const priceItem = catalog.find(
+      (item) =>
+        (resourceId && item.id === resourceId) ||
+        normalizeKey(item.name) === normalizeKey(stockItem.name)
     )
 
     if (!priceItem) {
@@ -232,9 +282,10 @@ export async function POST(req) {
 
     return NextResponse.json(
       {
-        message: `${resourceName} sold successfully`,
+        message: `${stockItem.name} sold successfully`,
         sold: {
-          name: resourceName,
+          resourceId: stockItem.resourceId || priceItem.id,
+          name: stockItem.name,
           soldStock: stock,
           price,
           totalAmount,

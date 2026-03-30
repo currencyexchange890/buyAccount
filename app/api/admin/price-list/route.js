@@ -2,7 +2,11 @@ import { NextResponse } from "next/server"
 import { jwtVerify } from "jose"
 import connectDB from "@/lib/db"
 import PriceList, { PACKAGE_OPTIONS } from "@/models/PriceList"
-import ResourcePrice, { defaultResources } from "@/models/ResourcePrice"
+import {
+  getResourceMaps,
+  normalizeResourceImage,
+  resolveResourceMeta,
+} from "@/lib/resource-utils"
 
 function clearTokenCookie(response) {
   response.cookies.set("token", "", {
@@ -44,78 +48,25 @@ async function verifyAdmin(req) {
   }
 }
 
-async function getOrCreateResourceConfig() {
-  let config = await ResourcePrice.findOne({ configKey: "main" })
-
-  if (!config) {
-    config = await ResourcePrice.create({
-      configKey: "main",
-      resources: defaultResources,
-    })
-  }
-
-  if (!Array.isArray(config.resources) || config.resources.length !== defaultResources.length) {
-    config.resources = defaultResources
-    await config.save()
-  }
-
-  return config
-}
-
-function sortResourcesByPrice(items) {
-  return [...items].sort((a, b) => {
-    const priceDiff = Number(a?.price || 0) - Number(b?.price || 0)
-
-    if (priceDiff !== 0) {
-      return priceDiff
-    }
-
-    return String(a?.name || a?.fileName || "").localeCompare(
-      String(b?.name || b?.fileName || "")
-    )
-  })
-}
-
-function buildResourceMap(resourceConfig) {
-  return new Map(
-    resourceConfig.resources.map((item) => [
-      item.fileName,
-      {
-        name: item.name,
-        fileName: item.fileName,
-        price: Number(item.price || 0),
-      },
-    ])
-  )
-}
-
-function mapResourceOptions(resourceConfig) {
-  return sortResourcesByPrice(resourceConfig.resources).map((item, index) => ({
-    id: index + 1,
-    name: item.name,
-    fileName: item.fileName,
-    image: `/image/${encodeURIComponent(item.fileName)}`,
-    price: Number(item.price || 0),
-  }))
-}
-
-function sortPackageResources(resources, resourceMap) {
-  return [...resources].sort((a, b) => {
-    const aPrice = Number(resourceMap.get(a.fileName)?.price || 0)
-    const bPrice = Number(resourceMap.get(b.fileName)?.price || 0)
+function sortPackageResources(resources, resourceMaps) {
+  return [...(Array.isArray(resources) ? resources : [])].sort((a, b) => {
+    const aMeta = resolveResourceMeta(a, resourceMaps)
+    const bMeta = resolveResourceMeta(b, resourceMaps)
+    const aPrice = Number(aMeta?.price || a?.unitPrice || 0)
+    const bPrice = Number(bMeta?.price || b?.unitPrice || 0)
     const priceDiff = aPrice - bPrice
 
     if (priceDiff !== 0) {
       return priceDiff
     }
 
-    return String(a.resourceName || a.fileName || "").localeCompare(
-      String(b.resourceName || b.fileName || "")
+    return String(a?.resourceName || aMeta?.name || a?.fileName || "").localeCompare(
+      String(b?.resourceName || bMeta?.name || b?.fileName || "")
     )
   })
 }
 
-function mapPackages(packages, resourceMap) {
+function mapPackages(packages, resourceMaps) {
   return [...packages]
     .sort(
       (a, b) =>
@@ -128,22 +79,37 @@ function mapPackages(packages, resourceMap) {
       validityHours: String(item.validityHours),
       minResourceValue: Number(item.minResourceValue || 0),
       maxResourceValue: Number(item.maxResourceValue || 0),
-      packageResources: sortPackageResources(item.packageResources, resourceMap).map((resource, index) => ({
-        rowId: `${item._id.toString()}-${index + 1}`,
-        resourceName: resource.resourceName,
-        fileName: resource.fileName,
-        image: `/image/${encodeURIComponent(resource.fileName)}`,
-        minQty: String(resource.minQty),
-        maxQty: String(resource.maxQty),
-      })),
+      packageResources: sortPackageResources(item.packageResources, resourceMaps).map(
+        (resource, index) => {
+          const resolved = resolveResourceMeta(resource, resourceMaps)
+          const liveUnitPrice = Number(resolved?.price || 0)
+          const unitPrice = liveUnitPrice > 0 ? liveUnitPrice : Number(resource?.unitPrice || 0)
+          const image = resolved?.image || normalizeResourceImage(resource)
+
+          return {
+            rowId: `${item._id.toString()}-${index + 1}`,
+            resourceId: String(resolved?.id || resource?.resourceId || "").trim(),
+            resourceName:
+              String(resolved?.name || resource?.resourceName || "").trim() ||
+              "Resource",
+            fileName:
+              String(resolved?.fileName || resource?.fileName || "").trim(),
+            image,
+            imageUrl: image,
+            unitPrice,
+            minQty: String(resource.minQty),
+            maxQty: String(resource.maxQty),
+          }
+        }
+      ),
     }))
 }
 
-function validatePackageBody(body, resourceMap) {
-  const packageName = body.packageName?.trim()
-  const price = Number(body.price)
-  const validityHours = Number(body.validityHours)
-  const packageResources = Array.isArray(body.packageResources)
+function validatePackageBody(body, resourceMaps) {
+  const packageName = String(body?.packageName || "").trim()
+  const price = Number(body?.price)
+  const validityHours = Number(body?.validityHours)
+  const packageResources = Array.isArray(body?.packageResources)
     ? body.packageResources
     : []
 
@@ -168,13 +134,23 @@ function validatePackageBody(body, resourceMap) {
   let maxResourceValue = 0
 
   for (const row of packageResources) {
-    const fileName = row.fileName?.trim()
-    const resource = resourceMap.get(fileName)
-    const minQty = Number(row.minQty)
-    const maxQty = Number(row.maxQty)
+    const minQty = Number(row?.minQty)
+    const maxQty = Number(row?.maxQty)
+    const resolved = resolveResourceMeta(row, resourceMaps)
 
-    if (!resource) {
+    const resourceName = String(resolved?.name || row?.resourceName || "").trim()
+    const fileName = String(resolved?.fileName || row?.fileName || "").trim()
+    const imageUrl = resolved?.image || normalizeResourceImage(row)
+    const liveUnitPrice = Number(resolved?.price || 0)
+    const snapshotUnitPrice = Number(row?.unitPrice || 0)
+    const unitPrice = liveUnitPrice > 0 ? liveUnitPrice : snapshotUnitPrice
+
+    if (!resourceName) {
       return { error: "Invalid resource selected" }
+    }
+
+    if (!imageUrl) {
+      return { error: "Resource image is missing" }
     }
 
     if (Number.isNaN(minQty) || minQty <= 0) {
@@ -190,14 +166,17 @@ function validatePackageBody(body, resourceMap) {
     }
 
     normalizedResources.push({
-      resourceName: resource.name,
-      fileName: resource.fileName,
+      resourceId: String(resolved?.id || row?.resourceId || "").trim(),
+      resourceName,
+      fileName,
+      imageUrl,
+      unitPrice,
       minQty,
       maxQty,
     })
 
-    minResourceValue += resource.price * minQty
-    maxResourceValue += resource.price * maxQty
+    minResourceValue += unitPrice * minQty
+    maxResourceValue += unitPrice * maxQty
   }
 
   return {
@@ -205,7 +184,7 @@ function validatePackageBody(body, resourceMap) {
       packageName,
       price,
       validityHours,
-      packageResources: sortPackageResources(normalizedResources, resourceMap),
+      packageResources: sortPackageResources(normalizedResources, resourceMaps),
       minResourceValue,
       maxResourceValue,
     },
@@ -227,14 +206,15 @@ export async function GET(req) {
   try {
     await connectDB()
 
-    const resourceConfig = await getOrCreateResourceConfig()
-    const resourceMap = buildResourceMap(resourceConfig)
-    const packages = await PriceList.find({}).lean()
+    const [resourceMaps, packages] = await Promise.all([
+      getResourceMaps(),
+      PriceList.find({}).lean(),
+    ])
 
     return NextResponse.json(
       {
-        resourceOptions: mapResourceOptions(resourceConfig),
-        packages: mapPackages(packages, resourceMap),
+        resourceOptions: resourceMaps.resources,
+        packages: mapPackages(packages, resourceMaps),
       },
       { status: 200 }
     )
@@ -260,10 +240,9 @@ export async function POST(req) {
 
     await connectDB()
 
-    const resourceConfig = await getOrCreateResourceConfig()
-    const resourceMap = buildResourceMap(resourceConfig)
+    const resourceMaps = await getResourceMaps()
+    const validated = validatePackageBody(body, resourceMaps)
 
-    const validated = validatePackageBody(body, resourceMap)
     if (validated.error) {
       return NextResponse.json({ message: validated.error }, { status: 400 })
     }
@@ -286,7 +265,7 @@ export async function POST(req) {
     return NextResponse.json(
       {
         message: "Package created successfully",
-        packages: mapPackages(packages, resourceMap),
+        packages: mapPackages(packages, resourceMaps),
       },
       { status: 201 }
     )
@@ -309,7 +288,7 @@ export async function PUT(req) {
 
   try {
     const body = await req.json()
-    const id = body.id?.trim()
+    const id = String(body?.id || "").trim()
 
     if (!id) {
       return NextResponse.json({ message: "Package id is required" }, { status: 400 })
@@ -317,10 +296,9 @@ export async function PUT(req) {
 
     await connectDB()
 
-    const resourceConfig = await getOrCreateResourceConfig()
-    const resourceMap = buildResourceMap(resourceConfig)
+    const resourceMaps = await getResourceMaps()
+    const validated = validatePackageBody(body, resourceMaps)
 
-    const validated = validatePackageBody(body, resourceMap)
     if (validated.error) {
       return NextResponse.json({ message: validated.error }, { status: 400 })
     }
@@ -351,7 +329,7 @@ export async function PUT(req) {
     return NextResponse.json(
       {
         message: "Package updated successfully",
-        packages: mapPackages(packages, resourceMap),
+        packages: mapPackages(packages, resourceMaps),
       },
       { status: 200 }
     )
@@ -374,7 +352,7 @@ export async function DELETE(req) {
 
   try {
     const body = await req.json()
-    const id = body.id?.trim()
+    const id = String(body?.id || "").trim()
 
     if (!id) {
       return NextResponse.json({ message: "Package id is required" }, { status: 400 })
@@ -382,9 +360,7 @@ export async function DELETE(req) {
 
     await connectDB()
 
-    const resourceConfig = await getOrCreateResourceConfig()
-    const resourceMap = buildResourceMap(resourceConfig)
-
+    const resourceMaps = await getResourceMaps()
     const deleted = await PriceList.findByIdAndDelete(id)
 
     if (!deleted) {
@@ -396,7 +372,7 @@ export async function DELETE(req) {
     return NextResponse.json(
       {
         message: "Package deleted successfully",
-        packages: mapPackages(packages, resourceMap),
+        packages: mapPackages(packages, resourceMaps),
       },
       { status: 200 }
     )

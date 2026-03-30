@@ -90,17 +90,21 @@ function buildAccountResources(packageResources) {
   const map = new Map()
 
   for (const item of items) {
+    const resourceId = String(item?.resourceId || "").trim()
     const resourceName = String(item?.resourceName || "").trim()
     const fileName = String(item?.fileName || "").trim()
+    const imageUrl = String(item?.imageUrl || "").trim()
     const quantity = getRandomInt(item?.minQty, item?.maxQty)
-    const key = normalizeResourceKey(resourceName)
+    const key = normalizeResourceKey(resourceId || resourceName || fileName)
 
     if (!key || quantity <= 0) continue
 
     if (!map.has(key)) {
       map.set(key, {
+        resourceId,
         resourceName,
         fileName,
+        imageUrl,
         quantity: 0,
         claimedQuantity: 0,
       })
@@ -109,8 +113,16 @@ function buildAccountResources(packageResources) {
     const current = map.get(key)
     current.quantity += quantity
 
+    if (!current.resourceId && resourceId) {
+      current.resourceId = resourceId
+    }
+
     if (!current.fileName && fileName) {
       current.fileName = fileName
+    }
+
+    if (!current.imageUrl && imageUrl) {
+      current.imageUrl = imageUrl
     }
   }
 
@@ -223,8 +235,10 @@ function buildDropPlan(resources, validityHours, coolDownMinutes, tapsPerCycle) 
     countsByCycle.forEach((count, cycleIndex) => {
       for (let i = 0; i < count; i += 1) {
         cycleDrops[cycleIndex].push({
+          resourceId: resource.resourceId || "",
           resourceName: resource.resourceName,
           fileName: resource.fileName || "",
+          imageUrl: resource.imageUrl || "",
           quantity: 1,
           claim: false,
           claimedAt: null,
@@ -257,8 +271,10 @@ function buildDropPlan(resources, validityHours, coolDownMinutes, tapsPerCycle) 
       timeline.push({
         cycleNumber: cycleIndex + 1,
         tapNumber,
+        resourceId: drop.resourceId || "",
         resourceName: drop.resourceName,
         fileName: drop.fileName || "",
+        imageUrl: drop.imageUrl || "",
         quantity: 1,
         claim: false,
         claimedAt: null,

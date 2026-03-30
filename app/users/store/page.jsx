@@ -92,6 +92,7 @@ export default function StorePage() {
         },
         credentials: "include",
         body: JSON.stringify({
+          resourceId: selectedItem.resourceId,
           resourceName: selectedItem.name,
         }),
       })

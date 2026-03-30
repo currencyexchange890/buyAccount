@@ -1,16 +1,27 @@
 import mongoose from "mongoose"
-import { defaultResources } from "@/models/ResourcePrice"
 
-const defaultMyResources = defaultResources.map((item) => ({
-  name: item.name,
-  stock: 0,
-}))
+const defaultMyResources = []
 
 const MyResourceItemSchema = new mongoose.Schema(
   {
+    resourceId: {
+      type: String,
+      default: "",
+      trim: true,
+    },
     name: {
       type: String,
       required: true,
+      trim: true,
+    },
+    fileName: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+    imageUrl: {
+      type: String,
+      default: "",
       trim: true,
     },
     stock: {

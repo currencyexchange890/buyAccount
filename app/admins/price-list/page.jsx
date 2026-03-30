@@ -44,7 +44,12 @@ const btnShadow =
 function makeEmptyResourceRow() {
   return {
     rowId: Date.now() + Math.random(),
+    resourceId: "",
+    resourceName: "",
     fileName: "",
+    image: "",
+    imageUrl: "",
+    unitPrice: 0,
     minQty: "",
     maxQty: "",
   }
@@ -58,8 +63,8 @@ function sortResourcesByPrice(items) {
       return priceDiff
     }
 
-    return String(a?.name || a?.fileName || "").localeCompare(
-      String(b?.name || b?.fileName || "")
+    return String(a?.name || a?.resourceName || a?.fileName || "").localeCompare(
+      String(b?.name || b?.resourceName || b?.fileName || "")
     )
   })
 }
@@ -73,8 +78,8 @@ function normalizePackages(items, priceMap) {
 
 function sortPackageResources(items, priceMap) {
   return [...(Array.isArray(items) ? items : [])].sort((a, b) => {
-    const aPrice = Number(priceMap?.get(a?.fileName)?.price || 0)
-    const bPrice = Number(priceMap?.get(b?.fileName)?.price || 0)
+    const aPrice = Number(priceMap?.get(a?.resourceId)?.price || a?.unitPrice || 0)
+    const bPrice = Number(priceMap?.get(b?.resourceId)?.price || b?.unitPrice || 0)
     const priceDiff = aPrice - bPrice
 
     if (priceDiff !== 0) {
@@ -116,8 +121,10 @@ export default function PriceListPage() {
   const priceMap = useMemo(() => {
     return new Map(
       sortedResourceOptions.map((item) => [
-        item.fileName,
+        item.id,
         {
+          id: item.id,
+          resourceId: item.id,
           name: item.name,
           fileName: item.fileName,
           price: Number(item.price || 0),
@@ -132,16 +139,18 @@ export default function PriceListPage() {
     let maxTotal = 0
 
     for (const row of form.resources) {
-      const resource = priceMap.get(row.fileName)
+      const resource = priceMap.get(row.resourceId)
       const minQty = Number(row.minQty)
       const maxQty = Number(row.maxQty)
 
-      if (!resource || !(minQty > 0) || !(maxQty > 0) || maxQty < minQty) {
+      const unitPrice = Number(resource?.price || row.unitPrice || 0)
+
+      if (unitPrice <= 0 || !(minQty > 0) || !(maxQty > 0) || maxQty < minQty) {
         continue
       }
 
-      minTotal += resource.price * minQty
-      maxTotal += resource.price * maxQty
+      minTotal += unitPrice * minQty
+      maxTotal += unitPrice * maxQty
     }
 
     return {
@@ -177,7 +186,7 @@ export default function PriceListPage() {
 
         const nextResourceOptions = sortResourcesByPrice(data?.resourceOptions || [])
         const nextPriceMap = new Map(
-          nextResourceOptions.map((item) => [item.fileName, item])
+          nextResourceOptions.map((item) => [item.id, item])
         )
 
         setResourceOptions(nextResourceOptions)
@@ -203,11 +212,21 @@ export default function PriceListPage() {
     }))
   }
 
-  const selectResource = (rowId, fileName) => {
+  const selectResource = (rowId, resource) => {
     setForm((prev) => ({
       ...prev,
       resources: prev.resources.map((row) =>
-        row.rowId === rowId ? { ...row, fileName } : row
+        row.rowId === rowId
+          ? {
+              ...row,
+              resourceId: resource.id,
+              resourceName: resource.name,
+              fileName: resource.fileName,
+              image: resource.image,
+              imageUrl: resource.image,
+              unitPrice: Number(resource.price || 0),
+            }
+          : row
       ),
     }))
   }
@@ -246,10 +265,14 @@ export default function PriceListPage() {
       .filter((row) => {
         const min = Number(row.minQty)
         const max = Number(row.maxQty)
-        return row.fileName && min > 0 && max > 0 && max >= min
+        return (row.resourceId || row.resourceName) && min > 0 && max > 0 && max >= min
       })
       .map((row) => ({
+        resourceId: row.resourceId,
+        resourceName: row.resourceName,
         fileName: row.fileName,
+        imageUrl: row.image || row.imageUrl,
+        unitPrice: Number(priceMap.get(row.resourceId)?.price || row.unitPrice || 0),
         minQty: Number(row.minQty),
         maxQty: Number(row.maxQty),
       }))
@@ -329,8 +352,13 @@ export default function PriceListPage() {
       price: item.price,
       validityHours: item.validityHours,
       resources: sortPackageResources(item.packageResources, priceMap).map((row) => ({
-        rowId: Date.now() + Math.random() + row.fileName,
-        fileName: row.fileName,
+        rowId: Date.now() + Math.random() + (row.resourceId || row.fileName),
+        resourceId: row.resourceId || "",
+        resourceName: row.resourceName || "",
+        fileName: row.fileName || "",
+        image: row.image || row.imageUrl || "",
+        imageUrl: row.image || row.imageUrl || "",
+        unitPrice: Number(row.unitPrice || 0),
         minQty: row.minQty,
         maxQty: row.maxQty,
       })),
@@ -525,17 +553,24 @@ export default function PriceListPage() {
 
                 <div className="space-y-4">
                   {form.resources.map((row, index) => {
-                    const selectedResource = priceMap.get(row.fileName)
+                    const selectedResource = priceMap.get(row.resourceId)
+                    const activeResource = selectedResource ||
+                      (row.resourceName
+                        ? {
+                            name: row.resourceName,
+                            image: row.image || row.imageUrl,
+                            price: Number(row.unitPrice || 0),
+                          }
+                        : null)
                     const rowMinQty = Number(row.minQty)
                     const rowMaxQty = Number(row.maxQty)
-                    const rowMinValue =
-                      selectedResource && rowMinQty > 0
-                        ? selectedResource.price * rowMinQty
-                        : 0
-                    const rowMaxValue =
-                      selectedResource && rowMaxQty > 0
-                        ? selectedResource.price * rowMaxQty
-                        : 0
+                    const unitPrice = Number(selectedResource?.price || row.unitPrice || 0)
+                    const rowMinValue = unitPrice > 0 && rowMinQty > 0
+                      ? unitPrice * rowMinQty
+                      : 0
+                    const rowMaxValue = unitPrice > 0 && rowMaxQty > 0
+                      ? unitPrice * rowMaxQty
+                      : 0
 
                     return (
                       <div
@@ -568,13 +603,13 @@ export default function PriceListPage() {
                         <div className="overflow-x-auto">
                           <div className="flex min-w-max gap-2 pb-2">
                             {sortedResourceOptions.map((resource) => {
-                              const selected = row.fileName === resource.fileName
+                              const selected = row.resourceId === resource.id
 
                               return (
                                 <button
-                                  key={resource.fileName}
+                                  key={resource.id}
                                   type="button"
-                                  onClick={() => selectResource(row.rowId, resource.fileName)}
+                                  onClick={() => selectResource(row.rowId, resource)}
                                   className={`relative flex h-[64px] w-[64px] shrink-0 items-center justify-center overflow-hidden rounded-[10px] border p-1.5 transition sm:h-[72px] sm:w-[72px] ${
                                     selected
                                       ? "border-[#60a5fa] bg-[#13203e]"
@@ -609,14 +644,14 @@ export default function PriceListPage() {
                           </div>
                         </div>
 
-                        {selectedResource && (
+                        {activeResource && (
                           <div
                             className="mt-2 rounded-md border border-[#22c55e]/20 bg-[#143222] px-3 py-2"
                             style={{ boxShadow: cardShadow }}
                           >
                             <p className="text-[12px] font-semibold text-[#bbf7d0]">
-                              {selectedResource.name} price: ৳
-                              {formatMoney(selectedResource.price)}
+                              {activeResource.name} price: ৳
+                              {formatMoney(activeResource.price)}
                             </p>
                           </div>
                         )}
@@ -838,8 +873,8 @@ export default function PriceListPage() {
 
                   <div className="grid grid-cols-2 gap-2 md:grid-cols-3 xl:grid-cols-4">
                     {item.packageResources.map((resource) => {
-                      const resourceInfo = priceMap.get(resource.fileName)
-                      const unitPrice = Number(resourceInfo?.price || 0)
+                      const resourceInfo = priceMap.get(resource.resourceId)
+                      const unitPrice = Number(resourceInfo?.price || resource.unitPrice || 0)
 
                       return (
                         <div
