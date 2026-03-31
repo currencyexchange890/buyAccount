@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
+import Image from "next/image"
 import { useRouter } from "next/navigation"
 import toast, { Toaster } from "react-hot-toast"
 import {
@@ -459,14 +460,16 @@ export default function ResourcePricePage() {
                 <p className="text-sm font-semibold text-white">Preview</p>
 
                 <div
-                  className="mt-3 flex min-h-[170px] items-center justify-center overflow-hidden rounded-[10px] border border-white/10 bg-[#101a31] p-3"
+                  className="relative mt-3 flex min-h-[170px] items-center justify-center overflow-hidden rounded-[10px] border border-white/10 bg-[#101a31] p-3"
                   style={{ boxShadow: cardShadow }}
                 >
                   {form.imageUrl ? (
-                    <img
+                    <Image
                       src={form.imageUrl}
                       alt={form.name || "Resource preview"}
-                      className="max-h-[140px] w-full object-contain"
+                      fill
+                      sizes="(max-width: 640px) 100vw, 360px"
+                      className="object-contain p-3"
                     />
                   ) : (
                     <div className="text-center text-sm text-white/45">
@@ -544,13 +547,15 @@ export default function ResourcePricePage() {
                   >
                     <div className="flex flex-col gap-3 sm:flex-row">
                       <div
-                        className="flex h-[96px] w-full items-center justify-center overflow-hidden rounded-[10px] border border-white/10 bg-[#101a31] p-2 sm:h-[110px] sm:w-[110px] sm:shrink-0"
+                        className="relative flex h-[96px] w-full items-center justify-center overflow-hidden rounded-[10px] border border-white/10 bg-[#101a31] p-2 sm:h-[110px] sm:w-[110px] sm:shrink-0"
                         style={{ boxShadow: cardShadow }}
                       >
-                        <img
+                        <Image
                           src={item.image}
                           alt={item.name}
-                          className="h-full w-full object-contain"
+                          fill
+                          sizes="(max-width: 640px) 100vw, 110px"
+                          className="object-contain p-2"
                         />
                       </div>
 

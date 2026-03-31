@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
+import Image from "next/image"
 import toast, { Toaster } from "react-hot-toast"
 
 const shellShadow =
@@ -201,13 +202,15 @@ export default function StorePage() {
                   style={{ boxShadow: cardShadow }}
                 >
                   <div
-                    className="aspect-square overflow-hidden rounded-[10px] border border-white/10 bg-[#101d38]"
+                    className="relative aspect-square overflow-hidden rounded-[10px] border border-white/10 bg-[#101d38]"
                     style={{ boxShadow: cardShadow }}
                   >
-                    <img
+                    <Image
                       src={item.image}
                       alt={item.name}
-                      className="h-full w-full object-contain"
+                      fill
+                      sizes="(max-width: 640px) 45vw, 240px"
+                      className="object-contain"
                     />
                   </div>
 
@@ -291,13 +294,15 @@ function SellModal({ item, selling, onClose, onSell }) {
         style={{ boxShadow: "0 30px 120px rgba(0,0,0,.72)" }}
       >
         <div
-          className="aspect-square overflow-hidden rounded-[10px] border border-white/10 bg-[#101d38] p-2"
+          className="relative aspect-square overflow-hidden rounded-[10px] border border-white/10 bg-[#101d38] p-2"
           style={{ boxShadow: cardShadow }}
         >
-          <img
+          <Image
             src={item.image}
             alt={item.name}
-            className="h-full w-full object-contain"
+            fill
+            sizes="(max-width: 640px) 70vw, 280px"
+            className="object-contain p-2"
           />
         </div>
 

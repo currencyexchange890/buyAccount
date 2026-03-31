@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
+import Image from "next/image"
 import { useRouter } from "next/navigation"
 import toast, { Toaster } from "react-hot-toast"
 import {
@@ -617,10 +618,12 @@ export default function PriceListPage() {
                                   }`}
                                   style={{ boxShadow: cardShadow }}
                                 >
-                                  <img
+                                  <Image
                                     src={resource.image}
                                     alt={resource.name}
-                                    className="h-full w-full object-contain"
+                                    fill
+                                    sizes="(max-width: 640px) 64px, 72px"
+                                    className="object-contain p-1.5"
                                   />
 
                                   <span
@@ -883,10 +886,12 @@ export default function PriceListPage() {
                           style={{ boxShadow: cardShadow }}
                         >
                           <div className="relative mb-2 flex h-[68px] items-center justify-center overflow-hidden rounded-[10px] border border-white/10 bg-[#0f1730] p-2">
-                            <img
+                            <Image
                               src={resource.image}
                               alt={resource.resourceName}
-                              className="h-full w-full object-contain"
+                              fill
+                              sizes="(max-width: 640px) 25vw, 68px"
+                              className="object-contain p-2"
                             />
 
                             <span

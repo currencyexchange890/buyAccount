@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import Image from "next/image"
 import { useRouter } from "next/navigation"
 import toast, { Toaster } from "react-hot-toast"
 
@@ -314,13 +315,15 @@ function ResourceRow({ resource }) {
     >
       <div className="flex min-w-0 items-center gap-3">
         <div
-          className="grid h-14 w-14 shrink-0 place-items-center overflow-hidden rounded-md border border-white/10 bg-[#101d38] p-2"
+          className="relative grid h-14 w-14 shrink-0 place-items-center overflow-hidden rounded-md border border-white/10 bg-[#101d38] p-2"
           style={{ boxShadow: fieldShadow }}
         >
-          <img
+          <Image
             src={resource.image}
             alt={resource.resourceName}
-            className="h-full w-full object-contain"
+            fill
+            sizes="56px"
+            className="object-contain p-2"
           />
         </div>
 
