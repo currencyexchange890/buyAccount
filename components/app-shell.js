@@ -82,6 +82,7 @@ const ADMIN_NAV_ITEMS = [
 ];
 
 const PUBLIC_PATHS = ["/users/login", "/users/signup"];
+const BALANCE_SYNC_EVENT = "app-balance-sync";
 
 const cardShadow =
   "0 24px 60px rgba(0,0,0,.38), inset 1px 1px 0 rgba(255,255,255,.05), inset -1px -1px 0 rgba(0,0,0,.28)";
@@ -100,8 +101,21 @@ function isPublicPage(pathname) {
   );
 }
 
+function toNumberOrZero(value) {
+  const number = Number(value || 0);
+
+  if (!Number.isFinite(number)) {
+    return 0;
+  }
+
+  return number;
+}
+
 function formatMoney(amount) {
-  return Number(amount || 0).toLocaleString("en-BD");
+  return toNumberOrZero(amount).toLocaleString("en-BD", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 }
 
 export default function AppShell({ children }) {
@@ -146,6 +160,8 @@ export default function AppShell({ children }) {
   useEffect(() => {
     if (hideShell) return;
 
+    let ignore = false;
+
     const loadSummary = async () => {
       try {
         const res = await fetch("/api/me/summary", {
@@ -157,11 +173,46 @@ export default function AppShell({ children }) {
         if (!res.ok) return;
 
         const data = await res.json();
-        setSummary(data);
+
+        if (!ignore) {
+          setSummary(data);
+        }
       } catch {}
     };
 
+    const handleBalanceSync = (event) => {
+      const detail = event?.detail || {};
+
+      if (detail && typeof detail === "object") {
+        setSummary((prev) => ({
+          fullName: detail.fullName ?? prev?.fullName ?? "",
+          role:
+            detail.role ??
+            prev?.role ??
+            (pathname.startsWith("/admins") ? "admin" : "user"),
+          depositBalance:
+            detail.depositBalance !== undefined
+              ? toNumberOrZero(detail.depositBalance)
+              : toNumberOrZero(prev?.depositBalance),
+          withdrawBalance:
+            detail.withdrawBalance !== undefined
+              ? toNumberOrZero(detail.withdrawBalance)
+              : toNumberOrZero(prev?.withdrawBalance),
+        }));
+      }
+
+      if (detail?.refresh !== false) {
+        loadSummary();
+      }
+    };
+
     loadSummary();
+    window.addEventListener(BALANCE_SYNC_EVENT, handleBalanceSync);
+
+    return () => {
+      ignore = true;
+      window.removeEventListener(BALANCE_SYNC_EVENT, handleBalanceSync);
+    };
   }, [hideShell, pathname]);
 
   useEffect(() => {

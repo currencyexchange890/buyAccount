@@ -13,6 +13,8 @@ const cardShadow =
 const blueBtnShadow =
   "10px 12px 24px rgba(59,130,246,.28), inset 1px 1px 0 rgba(255,255,255,.12), inset -1px -1px 0 rgba(0,0,0,.16)"
 
+const BALANCE_SYNC_EVENT = "app-balance-sync"
+
 export default function StorePage() {
   const [resources, setResources] = useState([])
   const [loading, setLoading] = useState(true)
@@ -106,6 +108,7 @@ export default function StorePage() {
 
       const nextStock = Number(data?.sold?.stock || 0)
       const totalAmount = Number(data?.sold?.totalAmount || 0)
+      const nextWithdrawBalance = Number(data?.sold?.withdrawBalance || 0)
 
       setResources((prev) =>
         prev.map((item) =>
@@ -118,6 +121,16 @@ export default function StorePage() {
             : item
         )
       )
+
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(
+          new CustomEvent(BALANCE_SYNC_EVENT, {
+            detail: {
+              withdrawBalance: nextWithdrawBalance,
+            },
+          })
+        )
+      }
 
       toast.success(
         data?.message ||
@@ -364,7 +377,7 @@ function StatBox({ label, value, valueClassName = "text-white" }) {
 
 function formatMoney(value) {
   return Number(value || 0).toLocaleString("en-BD", {
-    minimumFractionDigits: 0,
+    minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })
 }
